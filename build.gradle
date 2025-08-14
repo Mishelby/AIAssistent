@@ -1,48 +1,68 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
-    id 'java'
     id 'org.springframework.boot' version '3.5.4' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'idea'
 }
 
-group = 'ru.development'
-version = '0.0.1-SNAPSHOT'
-
 allprojects {
+    group = 'ru.development'
+    version = '0.0.1-SNAPSHOT'
+
     repositories {
+        gradlePluginPortal()
         mavenCentral()
-        maven { url = 'https://repo.maven.apache.org/maven2' }
+        maven { url = 'https://repo.example.com' }
     }
 }
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'idea'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
 
     dependencies {
         implementation 'org.springframework.boot:spring-boot-starter'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-        compileOnly("org.projectlombok:lombok:1.18.38")
-        annotationProcessor("org.projectlombok:lombok:1.18.38")
+        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+
+        compileOnly 'org.projectlombok:lombok:1.18.38'
+        annotationProcessor 'org.projectlombok:lombok:1.18.38'
+        annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
         annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
-        testCompileOnly("org.projectlombok:lombok:1.18.38")
-        testAnnotationProcessor("org.projectlombok:lombok:1.18.38")
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testCompileOnly 'org.projectlombok:lombok:1.18.38'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 
-    tasks.withType(Test) {
+    tasks.register('listPlugins') {
+        doLast {
+            println "Plugins for ${project.name}: ${project.plugins.collect { it.class.simpleName }}"
+        }
+    }
+
+    tasks.named('test') {
         useJUnitPlatform()
+    }
+
+//    tasks.register('debug', BootRun) {
+//        group = 'application'
+//        description = 'Run the Spring Boot app with debug enabled and dev profile'
+//        args = ['--spring.profiles.active=dev']
+//        jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
+//    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
     }
 }

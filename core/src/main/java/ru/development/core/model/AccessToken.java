@@ -18,4 +18,5 @@ public class AccessToken {
     String accessToken;
     @JsonProperty("expires_at")
     long expiresAt;
+    long expiresAfter;
 }

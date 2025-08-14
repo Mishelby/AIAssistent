@@ -1,5 +1,6 @@
 package ru.development.core.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jdk.jfr.MetadataDefinition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.development.core.service.GigaChatChatModelService;
 
-//@MetadataDefinition
 @Slf4j
 @RestController
 @RequestMapping("/chat")
@@ -18,9 +18,10 @@ public class GigaChatController {
 
     @PostMapping("/ask")
     public ResponseEntity<?> sendMessage(
+            HttpServletRequest servletRequest,
             @RequestParam(required = false) String requestId,
             @RequestParam String message
     ) {
-        return ResponseEntity.ok().body(gigaChatChatModelService.sendMessage(null, requestId, message));
+        return ResponseEntity.ok().body(gigaChatChatModelService.sendMessage(servletRequest, requestId, message));
     }
 }
