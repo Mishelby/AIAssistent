@@ -41,7 +41,11 @@ public class HttpRequest {
 
     public String bodyAsString() {
         if (nonNull(body) && body.length > 0) {
-            return new String(body, StandardCharsets.UTF_8);
+            String result = new String(body, StandardCharsets.UTF_8);
+            if (result.startsWith("\"") && result.endsWith("\"")) {
+                return result.substring(1, result.length() - 1);
+            }
+            return result;
         }else{
             return null;
         }

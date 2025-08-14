@@ -1,18 +1,29 @@
 package ru.development.core.httpCore.httpClient;
 
 import chat.giga.http.client.sse.SseListener;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpRequest.BodyPublisher;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
+import static org.apache.logging.log4j.util.Base64Util.encode;
 
+@Slf4j
 public class HttpClientImpl implements HttpClient {
     private final java.net.http.HttpClient httpClient;
     private final Duration readTimeout;
@@ -45,8 +56,9 @@ public class HttpClientImpl implements HttpClient {
     public HttpResponse execute(HttpRequest request) {
         HttpResponse response;
         try {
+            java.net.http.HttpRequest httpRequest = mapRequest(request);
             var httpResponse = httpClient.send(
-                    mapRequest(request),
+                    httpRequest,
                     java.net.http.HttpResponse.BodyHandlers.ofByteArray()
             );
 
@@ -106,6 +118,7 @@ public class HttpClientImpl implements HttpClient {
 
     private java.net.http.HttpRequest mapRequest(HttpRequest request) {
         try {
+            log.info("[INFO] HttpRequest info: {}", request.toString());
             var builder = java.net.http.HttpRequest.newBuilder()
                     .uri(new URI(request.url()));
 
@@ -122,8 +135,9 @@ public class HttpClientImpl implements HttpClient {
             }
 
             BodyPublisher bodyPublisher;
+            log.info("[INFO] Body publisher info: {}", request.bodyAsString());
             if (nonNull(request.body())) {
-                bodyPublisher = java.net.http.HttpRequest.BodyPublishers.ofByteArray(request.body());
+                bodyPublisher = java.net.http.HttpRequest.BodyPublishers.ofString(request.bodyAsString());
             } else {
                 bodyPublisher = java.net.http.HttpRequest.BodyPublishers.noBody();
             }
@@ -134,7 +148,7 @@ public class HttpClientImpl implements HttpClient {
             }
 
             return builder.build();
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException  e) {
             throw new RuntimeException(e);
         }
     }

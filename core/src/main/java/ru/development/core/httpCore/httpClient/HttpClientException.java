@@ -11,7 +11,7 @@ public class HttpClientException extends RuntimeException {
 
     public HttpClientException(int statusCode, byte[] responseBody) {
         super(String.format("StatusCode: %d, responseBody: %s", statusCode,
-                nonNull(responseBody) && responseBody.length > 0 ? Arrays.toString(responseBody) : null)
+                nonNull(responseBody) && responseBody.length > 0 ? new String(responseBody, StandardCharsets.UTF_8) : null)
         );
         this.statusCode = statusCode;
         this.responseBody = responseBody;

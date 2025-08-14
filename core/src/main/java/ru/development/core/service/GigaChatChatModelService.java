@@ -15,16 +15,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import ru.development.core.httpCore.IHttpCoreImpl;
+import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
 import ru.development.core.mapper.GigaChatModelInfoMapper;
 import ru.development.core.model.*;
 
 import org.springframework.http.HttpHeaders;
 import ru.development.core.repository.GigaChatModelInfoRepository;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -48,7 +50,7 @@ public class GigaChatChatModelService {
         final String finalUserRequestId = userRequestId;
 
         try {
-            AccessToken token = checkAccessToken(servletRequest, userRequestId);
+            AccessToken token = checkAccessToken(servletRequest);
             String bearerToken = token.getAccessToken();
 
             MDC.put("userRequestId", userRequestId);
@@ -119,7 +121,7 @@ public class GigaChatChatModelService {
         };
     }
 
-    public AccessToken checkAccessToken(HttpServletRequest servletRequest, String userRequestId) {
+    public AccessToken checkAccessToken(HttpServletRequest servletRequest) {
         String remoteAddr = servletRequest.getRemoteAddr();
 
         if (accessTokens.containsKey(remoteAddr) && nonNull(remoteAddr)) {
@@ -151,11 +153,22 @@ public class GigaChatChatModelService {
         }
     }
 
+    private String formDataToString(MultiValueMap<String, String> formData) {
+        return formData.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .map(value -> encode(entry.getKey()) + "=" + encode(value)))
+                .collect(Collectors.joining("&"));
+    }
+
+    private String encode(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
     private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
         return httpCore.post(
                 "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
                 getHeaders(),
-                formData,
+                formDataToString(formData),
                 AccessToken.class
         );
     }
