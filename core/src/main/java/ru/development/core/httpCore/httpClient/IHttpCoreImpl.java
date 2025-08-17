@@ -1,27 +1,21 @@
 package ru.development.core.httpCore.httpClient;
 
+import chat.giga.http.client.sse.SseListener;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestClient;
-import ru.development.core.httpCore.baseUrlPrefix.BaseUrlPrefix;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import static java.util.Objects.nonNull;
 
@@ -29,24 +23,15 @@ import static java.util.Objects.nonNull;
 @Slf4j
 @Component
 public class IHttpCoreImpl implements IHttpCore {
-    private final RestClient restClient;
-    private HttpClient httpClient;
+    private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public IHttpCoreImpl(@Autowired BaseUrlPrefix baseUrlPrefix, ObjectMapper objectMapper) {
-        this.restClient = RestClient.builder()
-                .requestFactory(new HttpComponentsClientHttpRequestFactory())
-                .requestInterceptor((request, body, execution) -> {
-                    log.info("Raw Request: {} {} {}", request.getMethod(), request.getURI(), request.getHeaders());
-                    return execution.execute(request, body);
-                })
-                .baseUrl(baseUrlPrefix.getBaseUrl())
-                .build();
-
+    public IHttpCoreImpl(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         httpClient = new HttpClientBuilderImpl()
-                .connectTimeout(Duration.ofSeconds(5))
-                .readTimeout(Duration.ofSeconds(10))
+                .connectTimeout(Duration.ofSeconds(30))
+                .readTimeout(Duration.ofSeconds(30))
+                .decorator(null)
                 .build();
     }
 
@@ -84,8 +69,29 @@ public class IHttpCoreImpl implements IHttpCore {
 
         return ResponseEntity.status(response.statusCode())
                 .body(jsonResponseBody);
-
     }
+
+    // TODO Пока не работает
+    private Function<HttpClient, HttpClient> decoratorClient = client -> new HttpClient() {
+        @Override
+        public HttpResponse execute(HttpRequest httpRequest) throws IOException {
+            try {
+                return httpClient.execute(httpRequest);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void execute(HttpRequest request, SseListener listener) {
+
+        }
+
+        @Override
+        public CompletableFuture<HttpResponse> executeAsync(HttpRequest request) {
+            return null;
+        }
+    };
 
     private byte[] encodeFormData(Object bodyValue) {
         if (nonNull(bodyValue)) {

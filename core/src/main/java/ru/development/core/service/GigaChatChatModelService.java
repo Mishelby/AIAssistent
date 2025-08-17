@@ -15,17 +15,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import ru.development.core.aop.TrackExecutionTime;
 import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
 import ru.development.core.mapper.GigaChatModelInfoMapper;
 import ru.development.core.model.*;
 
 import org.springframework.http.HttpHeaders;
+import ru.development.core.model.ChatResultDto;
+import ru.development.core.model.GigaChatResponseDto;
 import ru.development.core.repository.GigaChatModelInfoRepository;
+import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
+import ru.development.infrastructurekafka.service.GigachatProducer;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -37,12 +43,21 @@ import static java.util.Objects.nonNull;
 public class GigaChatChatModelService {
     private static final Map<String, AccessToken> accessTokens = new HashMap<>();
     public static final String ERROR_HTTP_CLIENT_EXCEPTION = "[ERROR] HttpClientException {}";
+    public static final String INFO_AUTH_KEY = "[INFO] authKey={}";
     private final IHttpCoreImpl httpCore;
     private final GigaChatModelInfoRepository gigaChatModelInfoRepository;
     private final GigaChatModelInfoMapper gigaChatModelInfoMapper;
+    private final ExecutorService executorService;
+
+    private final GigachatProducer gigachatProducer;
 
     @Transactional
-    public GigaChatResponse sendMessage(HttpServletRequest servletRequest, String userRequestId, String message) {
+    @TrackExecutionTime
+    public GigaChatResponse sendMessage(
+            HttpServletRequest servletRequest,
+            String userRequestId,
+            String message
+    ) {
         if (isNull(userRequestId)) {
             userRequestId = UUID.randomUUID().toString();
             log.info("userRequestId is {}", userRequestId);
@@ -55,41 +70,43 @@ public class GigaChatChatModelService {
 
             MDC.put("userRequestId", userRequestId);
             MDC.put("bearerToken", bearerToken);
-            log.info("[INFO] authKey={}", userRequestId);
+            log.info(INFO_AUTH_KEY, userRequestId);
             log.info("[INFO] bearerToken={}", bearerToken);
 
-            CompletableFuture<GigaChatResponse> future = CompletableFuture.supplyAsync(() ->
-                            GigaChatClient.builder()
-                                    .authClient(AuthClient.builder()
-                                            .withProvidedTokenAuth(bearerToken)
-                                            .build()
-                                    )
-                                    .connectTimeout(5)
-                                    .readTimeout(5)
-                                    .maxRetriesOnAuthError(3)
-                                    .logRequests(true)
-                                    .logResponses(true)
-                                    .build())
-                    .thenCompose(gigaChatClient -> CompletableFuture.supplyAsync(() ->
-                                    gigaChatClient.completions(CompletionRequest.builder()
-                                            .model(ModelName.GIGA_CHAT)
-                                            .message(ChatMessage.builder()
-                                                    .content(message)
-                                                    .role(ChatMessageRole.USER)
-                                                    .build()
-                                            ).build()))
-                            .handle((response, ex) -> {
-                                log.info("[INFO] response={}", response);
-                                List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
-                                String status = isNull(ex) ? "SUCCESS" : ex.getMessage();
-                                GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, status);
-                                log.info("[INFO] modelInfo={}", modelInfo);
-                                return ChatResultDto.builder()
-                                        .response(createResponse("GigaChatResponseDto", modelInfo))
-                                        .status(status)
-                                        .build();
-                            })
-                    );
+            CompletableFuture<ChatResultDto> future = CompletableFuture.supplyAsync(() -> {
+                var client = GigaChatClient.builder()
+                        .authClient(AuthClient.builder()
+                                .withProvidedTokenAuth(bearerToken)
+                                .build())
+                        .connectTimeout(30)
+                        .readTimeout(60)
+                        .build();
+
+                var response = client.completions(CompletionRequest.builder()
+                        .model(ModelName.GIGA_CHAT)
+                        .message(ChatMessage.builder()
+                                .content(message)
+                                .role(ChatMessageRole.USER)
+                                .build())
+                        .build());
+
+                List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
+                GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, "SUCCESS");
+
+                return ChatResultDto.builder()
+                        .response(createResponse("GigaChatResponseDto", modelInfo))
+                        .status("SUCCESS")
+                        .build();
+            }, executorService);
+
+            GigaChatProducerInfo gigaChatProducerInfo = GigaChatProducerInfo.builder()
+                    .key(UUID.randomUUID().toString())
+                    .userRequestId(finalUserRequestId)
+                    .sessionId(servletRequest.getSession().getId())
+                    .metadata(List.of(String.format(Thread.currentThread().getName(), servletRequest)))
+                    .build();
+
+            gigachatProducer.sendMessage(gigaChatProducerInfo);
 
             return future.join();
         } catch (HttpClientException ex) {
@@ -108,11 +125,19 @@ public class GigaChatChatModelService {
             String status
     ) {
         ChoiceMessage choice = choices.getFirst().message();
-        GigaChatModelInfo entity = gigaChatModelInfoMapper.toEntity(completions.model(), choice.content(), choice.role().name(), userRequestId, userMessage, status);
+        GigaChatModelInfo entity = gigaChatModelInfoMapper.toEntity(
+                completions.model(),
+                choice.content(),
+                choice.role().name(),
+                userRequestId,
+                userMessage,
+                status
+        );
         gigaChatModelInfoRepository.save(entity);
         return entity;
     }
 
+    // TODO Убрать
     private static GigaChatResponse createResponse(String type, GigaChatModelInfo gigaChatModelInfo) {
         return switch (type) {
             case "GigaChatResponseDto" ->
@@ -180,10 +205,10 @@ public class GigaChatChatModelService {
     }
 
     public HttpHeaders getHeaders() {
-        String clientSecret = "862b853a-7be8-4b84-8f74-44c92991fb85";
+        String clientSecret = "0afd06e1-d617-4692-b068-f79e23af97d7";
         String clientID = "2b16995d-7f48-4823-9fac-21cf15ae08cb";
         String authKey = Base64.getEncoder().encodeToString((clientID + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
-        log.info("[INFO] authKey={}", authKey);
+        log.info(INFO_AUTH_KEY, authKey);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", "Basic " + authKey);

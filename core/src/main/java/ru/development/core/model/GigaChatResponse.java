@@ -1,6 +1,6 @@
 package ru.development.core.model;
 
-public sealed interface GigaChatResponse permits GigaChatResponseDto, ChatResultDto{
+public sealed interface GigaChatResponse permits GigaChatResponseDto, ChatResultDto {
     String getModelName();
     Long getGigaChatId();
     String getMessage();

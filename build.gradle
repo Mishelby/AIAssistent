@@ -40,6 +40,8 @@ subprojects {
         testCompileOnly 'org.projectlombok:lombok:1.18.38'
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+        developmentOnly 'org.springframework.boot:spring-boot-devtools'
     }
 
     tasks.register('listPlugins') {
@@ -52,17 +54,11 @@ subprojects {
         useJUnitPlatform()
     }
 
-//    tasks.register('debug', BootRun) {
-//        group = 'application'
-//        description = 'Run the Spring Boot app with debug enabled and dev profile'
-//        args = ['--spring.profiles.active=dev']
-//        jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
-//    }
-}
-
-idea {
-    module {
-        downloadSources = true
-        downloadJavadoc = true
+    idea {
+        module {
+            downloadSources = true
+            downloadJavadoc = true
+        }
     }
 }
+

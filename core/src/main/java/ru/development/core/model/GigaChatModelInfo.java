@@ -25,7 +25,8 @@ public class GigaChatModelInfo {
     @Column(nullable = false)
     private String userRequestId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 5000)
+    @Lob
     private String message;
 
     private String role;

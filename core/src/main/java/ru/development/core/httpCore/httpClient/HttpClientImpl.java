@@ -1,27 +1,18 @@
 package ru.development.core.httpCore.httpClient;
 
 import chat.giga.http.client.sse.SseListener;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.MultiValueMap;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.net.http.HttpRequest.BodyPublisher;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
-import static org.apache.logging.log4j.util.Base64Util.encode;
 
 @Slf4j
 public class HttpClientImpl implements HttpClient {
@@ -76,6 +67,7 @@ public class HttpClientImpl implements HttpClient {
         return response;
     }
 
+
     private Optional<HttpResponse> mapResponse(java.net.http.HttpResponse<byte[]> response) {
         HttpResponse result = null;
         if (nonNull(response)) {
@@ -99,9 +91,10 @@ public class HttpClientImpl implements HttpClient {
         return httpClient.sendAsync(mapRequest(request),
                         java.net.http.HttpResponse.BodyHandlers.ofByteArray())
                 .thenApply(result -> {
-                    if (!isSuccessful(result)) {
+                    if (isSuccessful(result)) {
                         throw getException(result);
                     }
+
                     return mapResponse(result)
                             .orElse(null);
                 });
@@ -115,6 +108,8 @@ public class HttpClientImpl implements HttpClient {
         int statusCode = response.statusCode();
         return statusCode >= 200 && statusCode < 300;
     }
+
+
 
     private java.net.http.HttpRequest mapRequest(HttpRequest request) {
         try {

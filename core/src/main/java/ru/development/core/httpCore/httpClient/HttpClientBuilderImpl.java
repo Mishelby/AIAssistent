@@ -73,7 +73,7 @@ public class HttpClientBuilderImpl implements HttpClientBuilder<HttpClient>{
     }
 
     @Override
-    public HttpClientBuilder<HttpClient> decorator(Function decorator) {
+    public HttpClientBuilder<HttpClient> decorator(Function<HttpClient, HttpClient> decorator) {
         this.decorator = decorator;
         return this;
     }

@@ -1,5 +1,7 @@
 package ru.development.core.controller;
 
+import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jdk.jfr.MetadataDefinition;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,18 @@ public class GigaChatController {
     private final GigaChatChatModelService gigaChatChatModelService;
 
     @PostMapping("/ask")
+    @SystemMessage(value = "Ты учитель математики и физики")
+    @UserMessage(value = "Привет пользователь!")
     public ResponseEntity<?> sendMessage(
             HttpServletRequest servletRequest,
             @RequestParam(required = false) String requestId,
             @RequestParam String message
     ) {
         return ResponseEntity.ok().body(gigaChatChatModelService.sendMessage(servletRequest, requestId, message));
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createEmbedding(){
+        return ResponseEntity.ok().build();
     }
 }
