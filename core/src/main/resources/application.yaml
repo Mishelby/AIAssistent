@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: core
+  profiles:
+    active: dev
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+system:
+  base-url: "http://localhost:8080"

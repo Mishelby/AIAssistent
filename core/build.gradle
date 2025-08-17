@@ -1,0 +1,24 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
+dependencies {
+    implementation project(':infrastructure-kafka')
+    implementation 'chat.giga:langchain4j-gigachat:0.1.11'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.5'
+    implementation 'org.springframework:spring-webflux'
+    implementation 'com.h2database:h2'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'org.postgresql:postgresql'
+}
+
+springBoot {
+    mainClass.set('ru.development.core.CoreApplication')
+}
+
+tasks.register('debug', BootRun) {
+    dependsOn 'classes'
+    group = 'application'
+    description = 'Run the Spring Boot app with debug enabled and dev profile'
+    args = ['--spring.profiles.active=dev']
+    jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
+    classpath = sourceSets.main.runtimeClasspath
+}
