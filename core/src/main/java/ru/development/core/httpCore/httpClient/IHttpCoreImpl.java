@@ -71,7 +71,7 @@ public class IHttpCoreImpl implements IHttpCore {
                 .body(jsonResponseBody);
     }
 
-    // TODO Пока не работает
+    // TODO Пока не работает (а может и не заработает)
     private Function<HttpClient, HttpClient> decoratorClient = client -> new HttpClient() {
         @Override
         public HttpResponse execute(HttpRequest httpRequest) throws IOException {
@@ -101,15 +101,7 @@ public class IHttpCoreImpl implements IHttpCore {
                 throw new RuntimeException(e);
             }
         }
-        return null;
-    }
-
-    private byte[] getValueAsBytes(MultiValueMap<String, String> formData) {
-        try {
-            return objectMapper.writeValueAsBytes(formData);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        return new byte[0];
     }
 
 }

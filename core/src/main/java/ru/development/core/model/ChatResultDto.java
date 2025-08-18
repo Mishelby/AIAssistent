@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public final class ChatResultDto implements GigaChatResponse {
-    private final String status;
     private final GigaChatResponse response;
     private final Throwable error;
 

@@ -18,6 +18,7 @@ public class ExecutorTheadPoolConfig {
     public ExecutorService executorService() {
         AtomicInteger counter = new AtomicInteger(1);
         int cores = Runtime.getRuntime().availableProcessors();
+        log.info("[INFO] Количество свободных ядер при запуске приложения: {}", cores);
 
         return new ThreadPoolExecutor(
                 cores,

@@ -68,19 +68,6 @@ public class HttpClientImpl implements HttpClient {
     }
 
 
-    private Optional<HttpResponse> mapResponse(java.net.http.HttpResponse<byte[]> response) {
-        HttpResponse result = null;
-        if (nonNull(response)) {
-            result = HttpResponse.builder()
-                    .statusCode(response.statusCode())
-                    .headers(response.headers().map())
-                    .body(response.body())
-                    .build();
-        }
-
-        return Optional.ofNullable(result);
-    }
-
     @Override
     public void execute(HttpRequest request, SseListener listener) {
 
@@ -102,6 +89,19 @@ public class HttpClientImpl implements HttpClient {
 
     private HttpClientException getException(java.net.http.HttpResponse<byte[]> response) {
         throw new HttpClientException(response.statusCode(), response.body());
+    }
+
+    private Optional<HttpResponse> mapResponse(java.net.http.HttpResponse<byte[]> response) {
+        HttpResponse result = null;
+        if (nonNull(response)) {
+            result = HttpResponse.builder()
+                    .statusCode(response.statusCode())
+                    .headers(response.headers().map())
+                    .body(response.body())
+                    .build();
+        }
+
+        return Optional.ofNullable(result);
     }
 
     private static boolean isSuccessful(java.net.http.HttpResponse<?> response) {
