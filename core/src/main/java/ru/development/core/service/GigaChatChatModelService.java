@@ -38,23 +38,22 @@ import java.util.stream.Collectors;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
+@SuppressWarnings("ALL")
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class GigaChatChatModelService {
     private static final Map<String, AccessToken> accessTokens = new HashMap<>();
     private final IHttpCoreImpl httpCore;
-    private final GigaChatModelInfoRepository gigaChatModelInfoRepository;
-    private final GigaChatModelInfoMapper gigaChatModelInfoMapper;
     private final ExecutorService executorService;
+    private final GigaChatService gigaChatService;
 
     private final GigachatProducer gigachatProducer;
 
-    @Transactional
     @TrackExecutionTime
-    public GigaChatResponse sendMessage(HttpServletRequest servletRequest,
-                                        String userRequestId,
-                                        String message) {
+    public @NonNull GigaChatResponse sendMessage(HttpServletRequest servletRequest,
+                                                 String userRequestId,
+                                                 String message) {
         if (isNull(userRequestId)) {
             log.info("Пустой ID запроса пользователя");
             userRequestId = UUID.randomUUID().toString();
@@ -125,7 +124,7 @@ public class GigaChatChatModelService {
                 .build());
 
         List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
-        GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, null);
+        GigaChatModelInfo modelInfo = gigaChatService.saveChatInfo(choices, response, finalUserRequestId, message, null);
 
         return ChatResultDto.builder()
                 .response(getGigaChatResponseDto(modelInfo))
@@ -154,25 +153,6 @@ public class GigaChatChatModelService {
         return result;
     }
 
-    protected GigaChatModelInfo saveChatInfo(
-            List<Choice> choices,
-            CompletionResponse completions,
-            String userRequestId,
-            String userMessage,
-            String status
-    ) {
-        ChoiceMessage choice = choices.getFirst().message();
-        GigaChatModelInfo entity = gigaChatModelInfoMapper.toEntity(
-                completions.model(),
-                choice.content(),
-                choice.role().name(),
-                userRequestId,
-                userMessage,
-                status
-        );
-        gigaChatModelInfoRepository.save(entity);
-        return entity;
-    }
 
     public @NonNull AccessToken checkAccessToken(HttpServletRequest servletRequest) {
         String remoteAddr = servletRequest.getRemoteAddr();

@@ -19,6 +19,6 @@ tasks.register('debug', BootRun) {
     group = 'application'
     description = 'Run the Spring Boot app with debug enabled and dev profile'
     args = ['--spring.profiles.active=dev']
-    jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005,-Dfile.encoding=UTF-8']
+    jvmArgs = ['-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005']
     classpath = sourceSets.main.runtimeClasspath
 }

@@ -10,9 +10,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@SuppressWarnings("ALL")
 @Slf4j
 @Configuration
-public class ExecutorTheadPoolConfig {
+public class ExecutorThreadPoolConfig {
 
     @Bean(destroyMethod = "shutdown")
     public ExecutorService executorService() {

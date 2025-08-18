@@ -17,6 +17,10 @@ allprojects {
     }
 }
 
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
@@ -53,6 +57,7 @@ subprojects {
     tasks.named('test') {
         useJUnitPlatform()
     }
+
 
     idea {
         module {
