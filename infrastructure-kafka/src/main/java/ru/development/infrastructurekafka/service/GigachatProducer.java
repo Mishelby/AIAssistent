@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.stereotype.Service;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
 
@@ -23,7 +24,7 @@ public class GigachatProducer {
         );
 
         String correlationId = UUID.randomUUID().toString();
-        producerRecord.headers().add("correlationId", correlationId.getBytes(StandardCharsets.UTF_8));
+        producerRecord.headers().add(KafkaHeaders.CORRELATION_ID, correlationId.getBytes(StandardCharsets.UTF_8));
         log.info("[KAFKA INFO] Sending ProducerRecord with correlationId: {}", correlationId);
 
         log.info("[KAFKA INFO] Sending ProducerRecord: {}", producerRecord);

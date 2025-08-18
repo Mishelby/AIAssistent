@@ -1,17 +1,29 @@
 package ru.development.core.service;
 
-import chat.giga.model.completion.Choice;
-import chat.giga.model.completion.ChoiceMessage;
-import chat.giga.model.completion.CompletionResponse;
+import chat.giga.client.GigaChatClient;
+import chat.giga.client.auth.AuthClient;
+import chat.giga.model.ModelName;
+import chat.giga.model.completion.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.development.core.mapper.GigaChatModelInfoMapper;
+import ru.development.core.model.ChatResultDto;
 import ru.development.core.model.GigaChatModelInfo;
+import ru.development.core.model.GigaChatResponseDto;
 import ru.development.core.repository.GigaChatModelInfoRepository;
 
+import java.util.Collections;
 import java.util.List;
+
+import static java.util.Objects.nonNull;
+
+
+/**
+ * По идее, всё нужно переместить в один сервис, где я передаю чату сообщения и отправляю запросы в другие сервисы
+ * и где сохраняю данные в БД (Пока вынес, потому что транзакционный метод не будет работать в том же классе)
+ **/
 
 @Slf4j
 @Service
@@ -20,7 +32,39 @@ public class GigaChatService {
     private final GigaChatModelInfoRepository gigaChatModelInfoRepository;
     private final GigaChatModelInfoMapper gigaChatModelInfoMapper;
 
+    private static final int CONNECT_TIMEOUT = 10;
+    private static final int READ_TIMEOUT = 60;
+
     @Transactional
+    protected ChatResultDto sendGigaChatMessage(
+            String message,
+            String bearerToken,
+            String finalUserRequestId
+    ) {
+        var client = GigaChatClient.builder()
+                .authClient(AuthClient.builder()
+                        .withProvidedTokenAuth(bearerToken)
+                        .build())
+                .connectTimeout(CONNECT_TIMEOUT)
+                .readTimeout(READ_TIMEOUT)
+                .build();
+
+        var response = client.completions(CompletionRequest.builder()
+                .model(ModelName.GIGA_CHAT)
+                .message(ChatMessage.builder()
+                        .content(message)
+                        .role(ChatMessageRole.USER)
+                        .build())
+                .build());
+
+        List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
+        GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, null);
+
+        return ChatResultDto.builder()
+                .response(getGigaChatResponseDto(modelInfo))
+                .build();
+    }
+
     protected GigaChatModelInfo saveChatInfo(
             List<Choice> choices,
             CompletionResponse completions,
@@ -39,5 +83,13 @@ public class GigaChatService {
         );
         gigaChatModelInfoRepository.save(entity);
         return entity;
+    }
+
+    private static GigaChatResponseDto getGigaChatResponseDto(GigaChatModelInfo modelInfo) {
+        return GigaChatResponseDto.builder()
+                .message(modelInfo.message())
+                .modelName(modelInfo.modelName())
+                .gigaChatId(modelInfo.id())
+                .build();
     }
 }

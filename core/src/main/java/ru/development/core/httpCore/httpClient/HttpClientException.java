@@ -1,13 +1,12 @@
 package ru.development.core.httpCore.httpClient;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static java.util.Objects.nonNull;
 
 public class HttpClientException extends RuntimeException {
-    private int statusCode;
-    private byte[] responseBody;
+    private final int statusCode;
+    private final byte[] responseBody;
 
     public HttpClientException(int statusCode, byte[] responseBody) {
         super(String.format("StatusCode: %d, responseBody: %s", statusCode,

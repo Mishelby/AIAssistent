@@ -9,6 +9,10 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
 
+/**
+ * Пока просто вывожу информацию в логи, дальше добавлю сохранение в БД + какую нибудь логику
+ */
+
 @Slf4j
 @Service
 class GigachatConsumer {
@@ -21,7 +25,7 @@ class GigachatConsumer {
                              @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
                              @Header(KafkaHeaders.CORRELATION_ID) String correlationId) {
         log.info("[KAFKA INFO] Received GigaChatProducerInfo: {}", record.value());
-        log.info("[KAFKA INFO] Received Headers: {}, {}, {}, {}", key,  partition, topic, ts);
+        log.info("[KAFKA INFO] Received Headers: key={}, partition={}, topic={}, ts={}, correlationId={}", key,  partition, topic, ts, correlationId);
     }
 
 }

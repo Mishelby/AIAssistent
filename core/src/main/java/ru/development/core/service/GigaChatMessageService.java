@@ -1,30 +1,21 @@
 package ru.development.core.service;
 
-import chat.giga.client.GigaChatClient;
-import chat.giga.client.auth.AuthClient;
+
 import chat.giga.http.client.HttpClientException;
-import chat.giga.model.ModelName;
-import chat.giga.model.completion.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.MDC;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.development.core.aop.TrackExecutionTime;
 import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
-import ru.development.core.mapper.GigaChatModelInfoMapper;
 import ru.development.core.model.*;
-
 import org.springframework.http.HttpHeaders;
 import ru.development.core.model.ChatResultDto;
-import ru.development.core.model.GigaChatResponseDto;
-import ru.development.core.repository.GigaChatModelInfoRepository;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
 import ru.development.infrastructurekafka.service.GigachatProducer;
 
@@ -38,22 +29,31 @@ import java.util.stream.Collectors;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-@SuppressWarnings("ALL")
+/**
+ * Почти везде пока пробрасываю RuntimeException, потом поменяю на кастомные + нормальные
+ */
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GigaChatChatModelService {
+public class GigaChatMessageService {
+    // TODO Пока вместо кеша
     private static final Map<String, AccessToken> accessTokens = new HashMap<>();
+
     private final IHttpCoreImpl httpCore;
     private final ExecutorService executorService;
     private final GigaChatService gigaChatService;
-
     private final GigachatProducer gigachatProducer;
 
+    public static final int MAX_MESSAGE_LENGTH = 5000;
+
     @TrackExecutionTime
-    public @NonNull GigaChatResponse sendMessage(HttpServletRequest servletRequest,
-                                                 String userRequestId,
+    public @NonNull GigaChatResponse sendMessage(final HttpServletRequest servletRequest,
+                                                 HttpHeaders headers,
                                                  String message) {
+        final String correctMessage = isMessageCorrect(message);
+
+        String userRequestId = headers.getFirst("userRequestId");
         if (isNull(userRequestId)) {
             log.info("Пустой ID запроса пользователя");
             userRequestId = UUID.randomUUID().toString();
@@ -61,6 +61,12 @@ public class GigaChatChatModelService {
         }
         final String finalUserRequestId = userRequestId;
 
+        /**
+         * Здесь использовал CompletableFuture что бы посмотреть как это работает и когда лучше использовать
+         * Здесь есть запрос по url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth", и запрос в сам гига чат
+         * поэтому поставил асинхронны вызов, посмотреть время выполнения (Потом сделаю так, что бы запросы отправлялись
+         * через producer)
+         **/
         try {
             CompletableFuture<ChatResultDto> chatFuture = CompletableFuture.supplyAsync(() ->
                             checkAccessToken(servletRequest), executorService)
@@ -75,10 +81,11 @@ public class GigaChatChatModelService {
                             MDC.put("ID запроса пользователя: ", finalUserRequestId);
                             MDC.put("Токен доступа: ", token.getAccessToken());
 
-                            return sendGigaChatMessage(
-                                    message,
+                            return gigaChatService.sendGigaChatMessage(
+                                    correctMessage,
                                     token.getAccessToken(),
-                                    finalUserRequestId);
+                                    finalUserRequestId
+                            );
                         }, executorService);
                     }).exceptionally(ex -> {
                         log.error("[ERROR] Ошибка при получении токена или отправке сообщения: {}", ex.getMessage());
@@ -95,43 +102,95 @@ public class GigaChatChatModelService {
 
             return chatFuture.join();
         } catch (HttpClientException ex) {
-            log.error("Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
-            throw new RuntimeException(ex);
+            log.error("[ERROR] Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
+            throw new RuntimeException(ex.getMessage(), ex);
         } finally {
             MDC.clear();
         }
     }
 
-    private ChatResultDto sendGigaChatMessage(
-            String message,
-            String bearerToken,
-            String finalUserRequestId
-    ) {
-        var client = GigaChatClient.builder()
-                .authClient(AuthClient.builder()
-                        .withProvidedTokenAuth(bearerToken)
-                        .build())
-                .connectTimeout(10)
-                .readTimeout(60)
-                .build();
+    // Проверяю, есть ли токен в кеше, если нет, отправляю запрос на получение нового
+    public @NonNull AccessToken checkAccessToken(final HttpServletRequest servletRequest) {
+        String remoteAddr = servletRequest.getRemoteAddr();
 
-        var response = client.completions(CompletionRequest.builder()
-                .model(ModelName.GIGA_CHAT)
-                .message(ChatMessage.builder()
-                        .content(message)
-                        .role(ChatMessageRole.USER)
-                        .build())
-                .build());
+        if (accessTokens.containsKey(remoteAddr) && nonNull(remoteAddr)) {
+            AccessToken accessToken = accessTokens.get(remoteAddr);
+            long millis = System.currentTimeMillis();
 
-        List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
-        GigaChatModelInfo modelInfo = gigaChatService.saveChatInfo(choices, response, finalUserRequestId, message, null);
-
-        return ChatResultDto.builder()
-                .response(getGigaChatResponseDto(modelInfo))
-                .build();
+            if (accessToken.getExpiresAt() < millis) {
+                log.info("[INFO] Токен будет действовать ещё: {}", ((millis - accessToken.getExpiresAt()) * 60));
+                return accessToken;
+            } else {
+                accessTokens.remove(remoteAddr);
+                return getAccessToken(remoteAddr);
+            }
+        } else {
+            return getAccessToken(remoteAddr);
+        }
     }
 
-    private static GigaChatProducerInfo getGigaChatProducerInfo(HttpServletRequest servletRequest, String finalUserRequestId) {
+    // TODO переделать без аннотации @NonNull (пробросить ошибку)
+    private @NonNull AccessToken getAccessToken(String remoteAddr) {
+        MultiValueMap<String, String> formData = getMultiValueMap();
+        log.info("[INFO] MultiMap {}", formData);
+        try {
+            ResponseEntity<AccessToken> responseEntity = getAccessTokenResponseEntity(formData);
+            if (nonNull(responseEntity) && nonNull(responseEntity.getBody())) {
+                accessTokens.put(remoteAddr, responseEntity.getBody());
+                return responseEntity.getBody();
+            } else {
+                // ! Хз, надо ли? Можно просто пробросить ошибку и не ставить @NonNull !
+                return new AccessToken("Incorrect token", 0, 0);
+            }
+        } catch (HttpClientException ex) {
+            log.warn("Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
+        return httpCore.post(
+                "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+                getHeaders(),
+                formDataToString(formData),
+                AccessToken.class
+        );
+    }
+
+    // Здесь захардкодил ключ аутентификации, что бы сразу отправить его в заголовках и получить токен доступа
+    public HttpHeaders getHeaders() {
+        String clientSecret = "83646a9d-dece-4573-9c57-87e090762966";
+        String clientID = "2b16995d-7f48-4823-9fac-21cf15ae08cb";
+        String authKey = Base64.getEncoder().encodeToString((clientID + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
+        log.info("[INFO] Ключ аутентификации: {}", authKey);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "Basic " + authKey);
+        httpHeaders.add("Content-Type", "application/x-www-form-urlencoded");
+        httpHeaders.add("Accept", "application/json");
+        httpHeaders.add("RqUID", UUID.randomUUID().toString());
+        log.info("[INFO] HttpHeaders= {}", httpHeaders);
+        return httpHeaders;
+    }
+
+    // TODO Пока набросок, переделаю
+    private String isMessageCorrect(final String message) {
+        String newMessage = null;
+        if (message.length() > MAX_MESSAGE_LENGTH) {
+            log.info("[INFO] Превышена допустимая длинна сообщения: {}", message);
+            int exceededLength = message.length() - MAX_MESSAGE_LENGTH;
+            log.info("[INFO] Превышенный лимит: {}, вырезанный контекст {}", exceededLength,
+                    message.substring(MAX_MESSAGE_LENGTH, exceededLength));
+            newMessage = message.substring(0, MAX_MESSAGE_LENGTH);
+        }
+
+        return newMessage;
+    }
+
+    // Формирование информации для Producer (Пока просто указал какие-то базовые данные) :)
+    private static GigaChatProducerInfo getGigaChatProducerInfo(
+            final HttpServletRequest servletRequest,
+            final String finalUserRequestId) {
         return GigaChatProducerInfo.builder()
                 .key(UUID.randomUUID().toString())
                 .userRequestId(finalUserRequestId)
@@ -154,66 +213,11 @@ public class GigaChatChatModelService {
     }
 
 
-    public @NonNull AccessToken checkAccessToken(HttpServletRequest servletRequest) {
-        String remoteAddr = servletRequest.getRemoteAddr();
-
-        if (accessTokens.containsKey(remoteAddr) && nonNull(remoteAddr)) {
-            AccessToken accessToken = accessTokens.get(remoteAddr);
-            long millis = System.currentTimeMillis();
-
-            if (accessToken.getExpiresAt() < millis) {
-                log.info("[INFO] Token expired after {}", ((millis - accessToken.getExpiresAt()) * 60));
-                return accessToken;
-            } else {
-                accessTokens.remove(remoteAddr);
-                return getAccessToken(remoteAddr);
-            }
-        } else {
-            return getAccessToken(remoteAddr);
-        }
-    }
-
-    private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
-        return httpCore.post(
-                "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-                getHeaders(),
-                formDataToString(formData),
-                AccessToken.class
-        );
-    }
-
-    private AccessToken getAccessToken(String remoteAddr) {
-        MultiValueMap<String, String> formData = getMultiValueMap();
-        log.info("[INFO] MultiMap {}", formData);
-        try {
-            ResponseEntity<AccessToken> responseEntity = getAccessTokenResponseEntity(formData);
-            accessTokens.put(remoteAddr, responseEntity.getBody());
-            return responseEntity.getBody();
-        } catch (HttpClientException ex) {
-            log.warn("Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
-            throw new RuntimeException(ex);
-        }
-    }
-
-    private static GigaChatResponseDto getGigaChatResponseDto(GigaChatModelInfo modelInfo) {
-        return GigaChatResponseDto.builder().message(modelInfo.message()).modelName(modelInfo.modelName()).gigaChatId(modelInfo.id()).build();
-    }
-
-    public HttpHeaders getHeaders() {
-        String clientSecret = "83646a9d-dece-4573-9c57-87e090762966";
-        String clientID = "2b16995d-7f48-4823-9fac-21cf15ae08cb";
-        String authKey = Base64.getEncoder().encodeToString((clientID + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
-        log.info("[INFO] Ключ аутентификации: {}", authKey);
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add("Authorization", "Basic " + authKey);
-        httpHeaders.add("Content-Type", "application/x-www-form-urlencoded");
-        httpHeaders.add("Accept", "application/json");
-        httpHeaders.add("RqUID", UUID.randomUUID().toString());
-        log.info("[INFO] HttpHeaders= {}", httpHeaders);
-        return httpHeaders;
-    }
-
+    /**
+     * Эти три метода нужны для того, что бы отправить scope в теле запроса, т.к я сделал надстройку над Http клиентом
+     * @param formData мультимапа для формирования скоупа
+     * @return String
+     */
     private String formDataToString(MultiValueMap<String, String> formData) {
         return formData.entrySet().stream()
                 .flatMap(entry -> entry.getValue().stream()
