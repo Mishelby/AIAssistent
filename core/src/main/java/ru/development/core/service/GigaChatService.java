@@ -4,6 +4,8 @@ import chat.giga.client.GigaChatClient;
 import chat.giga.client.auth.AuthClient;
 import chat.giga.model.ModelName;
 import chat.giga.model.completion.*;
+import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ public class GigaChatService {
     private static final int READ_TIMEOUT = 60;
 
     @Transactional
+    @SystemMessage(value = "Ты учитель математики и физики")
+    @UserMessage(value = "Привет пользователь!")
     protected ChatResultDto sendGigaChatMessage(
             String message,
             String bearerToken,

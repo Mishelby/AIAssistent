@@ -21,8 +21,6 @@ public class GigaChatController {
     private final GigaChatMessageService gigaChatMessageService;
 
     @PostMapping("/ask")
-    @SystemMessage(value = "Ты учитель математики и физики")
-    @UserMessage(value = "Привет пользователь!")
     public ResponseEntity<GigaChatResponse> sendMessage(
             HttpServletRequest servletRequest,
             @RequestHeader HttpHeaders headers,

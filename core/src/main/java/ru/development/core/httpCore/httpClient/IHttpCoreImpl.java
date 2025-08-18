@@ -38,7 +38,13 @@ public class IHttpCoreImpl implements IHttpCore {
     @Override
     public <T extends HttpClient> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType) {
         Map<String, List<String>> headerMap = new HashMap<>(headers);
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.GET, url, headerMap, null);
+        HttpRequest httpRequest =  HttpRequest.builder()
+                .url(url)
+                .headers(headerMap)
+                .method(HttpMethod.GET)
+                .body(null)
+                .build();
+
         HttpResponse response = null;
 
         try {
@@ -55,7 +61,12 @@ public class IHttpCoreImpl implements IHttpCore {
     @Override
     public <T> ResponseEntity<T> post(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType) {
         Map<String, List<String>> headerMap = new HashMap<>(headers);
-        HttpRequest httpRequest = new HttpRequest(HttpMethod.POST, url, headerMap, encodeFormData(bodyValue));
+        HttpRequest httpRequest = HttpRequest.builder()
+                .url(url)
+                .headers(headerMap)
+                .method(HttpMethod.POST)
+                .body(encodeFormData(bodyValue))
+                .build();
 
         HttpResponse response = null;
         T jsonResponseBody = null;
