@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    groups:
+      chat-info: gigachat-info-group
+      request-data: gigachat-request-group
+      token-data: check-token-group
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8080

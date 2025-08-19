@@ -1,0 +1,34 @@
+package ru.development.main.httpCore.httpClient;
+
+import java.nio.charset.StandardCharsets;
+
+import static java.util.Objects.nonNull;
+
+public class HttpClientException extends RuntimeException {
+    private final int statusCode;
+    private final byte[] responseBody;
+
+    public HttpClientException(int statusCode, byte[] responseBody) {
+        super(String.format("StatusCode: %d, responseBody: %s", statusCode,
+                nonNull(responseBody) && responseBody.length > 0 ? new String(responseBody, StandardCharsets.UTF_8) : null)
+        );
+        this.statusCode = statusCode;
+        this.responseBody = responseBody;
+    }
+
+    public int statusCode() {
+        return statusCode;
+    }
+
+    public byte[] body() {
+        return responseBody;
+    }
+
+    public String bodyAsString() {
+        if (nonNull(responseBody) && responseBody.length > 0) {
+            return new String(responseBody, StandardCharsets.UTF_8);
+        } else {
+            return null;
+        }
+    }
+}
