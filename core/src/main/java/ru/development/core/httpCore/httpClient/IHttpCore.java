@@ -7,6 +7,6 @@ import org.springframework.util.MultiValueMap;
 import java.io.IOException;
 
 public interface IHttpCore {
-    <T extends HttpClient> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType) throws IOException;
+    <T> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType);
     <T> ResponseEntity<T> post(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType);
 }

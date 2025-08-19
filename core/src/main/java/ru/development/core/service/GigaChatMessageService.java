@@ -15,8 +15,11 @@ import ru.development.core.aop.TrackExecutionTime;
 import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
 import ru.development.core.model.*;
 import org.springframework.http.HttpHeaders;
-import ru.development.core.model.ChatResultDto;
+import ru.development.core.model.dto.GigaChatModelInfoDto;
+import ru.development.core.model.dto.GigaChatResponse;
+import ru.development.infrastructurekafka.model.CheckTokenRequest;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
+import ru.development.infrastructurekafka.model.GigaChatRequestData;
 import ru.development.infrastructurekafka.service.GigachatProducer;
 
 import java.net.URLEncoder;
@@ -24,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
@@ -68,7 +73,7 @@ public class GigaChatMessageService {
          * через producer)
          **/
         try {
-            CompletableFuture<ChatResultDto> chatFuture = CompletableFuture.supplyAsync(() ->
+            CompletableFuture<GigaChatModelInfoDto> chatFuture = CompletableFuture.supplyAsync(() ->
                             checkAccessToken(servletRequest), executorService)
                     .thenCompose(token -> {
 
@@ -80,6 +85,9 @@ public class GigaChatMessageService {
                             }
                             MDC.put("ID запроса пользователя: ", finalUserRequestId);
                             MDC.put("Токен доступа: ", token.getAccessToken());
+
+
+//                            gigachatProducer.sendMainMessage(builder.build());
 
                             return gigaChatService.sendGigaChatMessage(
                                     correctMessage,
@@ -94,7 +102,7 @@ public class GigaChatMessageService {
 
             CompletableFuture.runAsync(() -> {
                 GigaChatProducerInfo gigaChatProducerInfo = getGigaChatProducerInfo(servletRequest, finalUserRequestId);
-                gigachatProducer.sendMessage(gigaChatProducerInfo);
+                gigachatProducer.sendInfoMessage(gigaChatProducerInfo);
             }, executorService).exceptionally(ex -> {
                 log.error("[ERROR] Ошибка отправки данных ProducerFactory: {}", ex.getMessage());
                 throw new RuntimeException(ex.getMessage(), ex);
@@ -143,7 +151,7 @@ public class GigaChatMessageService {
                 return new AccessToken("Incorrect token", 0, 0);
             }
         } catch (HttpClientException ex) {
-            log.warn("Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
+            log.error("[ERROR] Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
             throw new RuntimeException(ex);
         }
     }
@@ -215,6 +223,7 @@ public class GigaChatMessageService {
 
     /**
      * Эти три метода нужны для того, что бы отправить scope в теле запроса, т.к я сделал надстройку над Http клиентом
+     *
      * @param formData мультимапа для формирования скоупа
      * @return String
      */

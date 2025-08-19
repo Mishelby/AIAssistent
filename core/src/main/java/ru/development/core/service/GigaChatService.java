@@ -1,6 +1,7 @@
 package ru.development.core.service;
 
 import chat.giga.client.GigaChatClient;
+import chat.giga.client.GigaChatClientImpl;
 import chat.giga.client.auth.AuthClient;
 import chat.giga.model.ModelName;
 import chat.giga.model.completion.*;
@@ -11,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.development.core.mapper.GigaChatModelInfoMapper;
-import ru.development.core.model.ChatResultDto;
 import ru.development.core.model.GigaChatModelInfo;
-import ru.development.core.model.GigaChatResponseDto;
+import ru.development.core.model.dto.GigaChatModelInfoDto;
+import ru.development.core.model.dto.GigaChatResponseDto;
 import ru.development.core.repository.GigaChatModelInfoRepository;
 
 import java.util.Collections;
@@ -40,32 +41,49 @@ public class GigaChatService {
     @Transactional
     @SystemMessage(value = "Ты учитель математики и физики")
     @UserMessage(value = "Привет пользователь!")
-    protected ChatResultDto sendGigaChatMessage(
+    protected GigaChatModelInfoDto sendGigaChatMessage(
             String message,
             String bearerToken,
             String finalUserRequestId
     ) {
-        var client = GigaChatClient.builder()
+        var client = getGigaChatClient(bearerToken);
+        var response = getCompletions(message, client, ModelName.GIGA_CHAT, ChatMessageRole.USER);
+
+        List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
+        GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, null);
+
+        return getBuild(modelInfo);
+    }
+
+    private static GigaChatClientImpl getGigaChatClient(String bearerToken) {
+        return GigaChatClient.builder()
                 .authClient(AuthClient.builder()
                         .withProvidedTokenAuth(bearerToken)
                         .build())
                 .connectTimeout(CONNECT_TIMEOUT)
                 .readTimeout(READ_TIMEOUT)
                 .build();
+    }
 
-        var response = client.completions(CompletionRequest.builder()
-                .model(ModelName.GIGA_CHAT)
+    private static CompletionResponse getCompletions(String message,
+                                                     GigaChatClientImpl client,
+                                                     String modelName,
+                                                     ChatMessageRole chatMessageRole) {
+        return client.completions(CompletionRequest.builder()
+                .model(modelName)
                 .message(ChatMessage.builder()
                         .content(message)
-                        .role(ChatMessageRole.USER)
+                        .role(chatMessageRole)
                         .build())
                 .build());
+    }
 
-        List<Choice> choices = nonNull(response.choices()) ? response.choices() : Collections.emptyList();
-        GigaChatModelInfo modelInfo = saveChatInfo(choices, response, finalUserRequestId, message, null);
-
-        return ChatResultDto.builder()
-                .response(getGigaChatResponseDto(modelInfo))
+    private static GigaChatModelInfoDto getBuild(GigaChatModelInfo modelInfo) {
+        return GigaChatModelInfoDto.builder()
+                .modelName(modelInfo.modelName())
+                .message(modelInfo.message())
+                .content(modelInfo.content())
+                .userRequestId(modelInfo.userRequestId())
                 .build();
     }
 
@@ -85,8 +103,9 @@ public class GigaChatService {
                 userMessage,
                 status
         );
-        gigaChatModelInfoRepository.save(entity);
-        return entity;
+
+        return gigaChatModelInfoRepository.save(entity);
+
     }
 
     private static GigaChatResponseDto getGigaChatResponseDto(GigaChatModelInfo modelInfo) {

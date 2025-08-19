@@ -36,9 +36,9 @@ public class IHttpCoreImpl implements IHttpCore {
     }
 
     @Override
-    public <T extends HttpClient> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType) {
+    public <T> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType) {
         Map<String, List<String>> headerMap = new HashMap<>(headers);
-        HttpRequest httpRequest =  HttpRequest.builder()
+        HttpRequest httpRequest = HttpRequest.builder()
                 .url(url)
                 .headers(headerMap)
                 .method(HttpMethod.GET)
