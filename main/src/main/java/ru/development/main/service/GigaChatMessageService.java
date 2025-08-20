@@ -70,16 +70,18 @@ public class GigaChatMessageService {
              * Отправляю синхронно, т.к мне нужно дождаться результата проверки токена
              * Пробовал делать асинхронную цепочку, было бесконечное ожидание, решил сделать проще
              */
-            gigachatProducer.sendMainMessage("gigachat.message", "key", requestData);
+            gigachatProducer.sendMainMessage("gigachat.message", userRequestId, requestData);
 
             /**
              * Отправляю асинхронно, т.к здесь мне не нужно ждать промежуточных операций и я сразу отправляю данные
-             * через продьюсер в топик
+             * через продьюсер в кафку
              */
             CompletableFuture.runAsync(() -> {
                 GigaChatProducerInfo gigaChatProducerInfo
                         = getGigaChatProducerInfo(servletRequest, finalUserRequestId);
-                gigachatProducer.sendInfoMessage("gigachat.info", gigaChatProducerInfo);
+                gigachatProducer.sendInfoMessage(
+                        "gigachat.info", servletRequest.getSession().getId(), gigaChatProducerInfo
+                );
             }, executorService).exceptionally(ex -> {
                 log.error("[ERROR] Ошибка при отправке данных в топик: {}", "gigachat.info", ex);
                 return null;

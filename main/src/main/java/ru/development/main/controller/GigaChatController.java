@@ -29,8 +29,4 @@ public class GigaChatController {
         );
     }
 
-    @PostMapping
-    public ResponseEntity<?> createEmbedding() {
-        return ResponseEntity.ok().build();
-    }
 }

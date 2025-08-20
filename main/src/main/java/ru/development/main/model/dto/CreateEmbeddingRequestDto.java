@@ -19,4 +19,7 @@ import java.util.List;
 public class CreateEmbeddingRequestDto {
     String model;
     List<String> input;
+    String collectionName;
+    String partitionName;
+    String category;
 }
