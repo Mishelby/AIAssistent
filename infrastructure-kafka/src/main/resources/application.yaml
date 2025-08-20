@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: infrastructure-kafka
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    groups:
+      chat-info: gigachat-info-group
+      request-data: gigachat-request-group
+      token-data: check-token-group
+#    consumer:
+#      group-id: ${KAFKA_GROUP_ID:default-group}
+#      auto-offset-reset: latest
+#      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+#      properties:
+#        spring.json.trusted.packages: "*"
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+#
+#  app:
+#    kafka:
+#      topics:
+#        gigachat-messages: gigachat.messages
+#        math-results: math.results
+
+
+server:
+  port: 8084

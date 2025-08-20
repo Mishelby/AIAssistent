@@ -1,0 +1,13 @@
+package ru.development.infrastructurekafka.model;
+
+import lombok.Builder;
+
+import java.io.Serializable;
+
+@Builder
+public record CheckTokenRequest(
+        String key,
+        String remoteAddr,
+        String correlationId
+) implements Serializable {
+}
