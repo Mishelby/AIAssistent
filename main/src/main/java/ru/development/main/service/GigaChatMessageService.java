@@ -9,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.development.main.aop.TrackExecutionTime;
 import org.springframework.http.HttpHeaders;
-import ru.development.main.model.AccessToken;
-import ru.development.main.model.dto.GigaChatModelInfoDto;
 import ru.development.main.model.dto.GigaChatResponse;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
 import ru.development.infrastructurekafka.model.GigaChatRequestData;
@@ -19,7 +17,6 @@ import ru.development.infrastructurekafka.service.GigachatProducer;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.function.Supplier;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -57,7 +54,6 @@ public class GigaChatMessageService {
          * равно с кафкой, хотя бы посмотреть как работает
          **/
         try {
-
             var accessToken = checkTokenService.checkAccessToken(servletRequest.getRemoteAddr());
             String token = accessToken.getAccessToken();
 
@@ -68,11 +64,18 @@ public class GigaChatMessageService {
             );
 
             GigaChatRequestData requestData
-                    = getGigaChatRequestData(modelInfo.content(), correctMessage,
-                    finalUserRequestId);
+                    = getGigaChatRequestData(modelInfo.content(), correctMessage, finalUserRequestId);
 
+            /**
+             * Отправляю синхронно, т.к мне нужно дождаться результата проверки токена
+             * Пробовал делать асинхронную цепочку, было бесконечное ожидание, решил сделать проще
+             */
             gigachatProducer.sendMainMessage("gigachat.message", "key", requestData);
 
+            /**
+             * Отправляю асинхронно, т.к здесь мне не нужно ждать промежуточных операций и я сразу отправляю данные
+             * через продьюсер в топик
+             */
             CompletableFuture.runAsync(() -> {
                 GigaChatProducerInfo gigaChatProducerInfo
                         = getGigaChatProducerInfo(servletRequest, finalUserRequestId);
@@ -111,7 +114,7 @@ public class GigaChatMessageService {
             log.info("[INFO] Превышена допустимая длинна сообщения: {}", message);
             int exceededLength = message.length() - MAX_MESSAGE_LENGTH;
             log.info("[INFO] Превышенный лимит: {}, вырезанный контекст {}", exceededLength,
-                    message.substring(MAX_MESSAGE_LENGTH, exceededLength));
+                    message.substring(MAX_MESSAGE_LENGTH));
             newMessage = message.substring(0, MAX_MESSAGE_LENGTH);
         } else {
             return message;
@@ -128,7 +131,8 @@ public class GigaChatMessageService {
                 .key(UUID.randomUUID().toString())
                 .userRequestId(finalUserRequestId)
                 .sessionId(servletRequest.getSession().getId())
-                .metadata(List.of(String.format(Thread.currentThread().getName(), getHeadersNameFromRequest(servletRequest.getHeaderNames()))))
+                .metadata(List.of(String.format(Thread.currentThread().getName(),
+                        getHeadersNameFromRequest(servletRequest.getHeaderNames()))))
                 .build();
 
     }
