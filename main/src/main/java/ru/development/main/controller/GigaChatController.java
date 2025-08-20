@@ -24,7 +24,9 @@ public class GigaChatController {
             @RequestHeader HttpHeaders headers,
             @RequestParam String message
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(gigaChatMessageService.sendMessage(servletRequest, headers, message));
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                gigaChatMessageService.sendMessage(servletRequest, headers, message)
+        );
     }
 
     @PostMapping

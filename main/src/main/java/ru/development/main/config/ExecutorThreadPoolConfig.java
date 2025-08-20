@@ -28,7 +28,7 @@ public class ExecutorThreadPoolConfig {
                 r -> {
                     Thread th = new Thread(r);
                     th.setName("custom-thread-" + counter.getAndIncrement());
-                    th.setDaemon(true);
+                    th.setDaemon(false);
                     log.info("[INFO] custom-thread-{} started", th.getName());
                     log.info("[INFO] custom-thread-{} thread group name", th.getThreadGroup().getName());
                     return th;

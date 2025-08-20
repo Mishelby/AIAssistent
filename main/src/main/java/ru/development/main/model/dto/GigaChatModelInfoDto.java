@@ -1,11 +1,13 @@
 package ru.development.main.model.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Lob;
 import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -16,19 +18,21 @@ import java.time.LocalDateTime;
 @Accessors(fluent = true)
 @Builder
 public final class GigaChatModelInfoDto implements GigaChatResponse {
+    @JsonProperty("modelName")
     private String modelName;
 
-    @Column(nullable = false)
+    @JsonProperty("userRequestId")
     private String userRequestId;
 
-    @Column(nullable = false, length = 5000)
     @Lob
+    @JsonProperty("message")
     private String message;
 
     @Lob
+    @JsonProperty("content")
     private String content;
 
-    @Column(nullable = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @JsonProperty("timestamp")
     private LocalDateTime timestamp;
-
 }

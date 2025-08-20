@@ -60,6 +60,7 @@ public class HttpClientImpl implements HttpClient {
             response = mapResponse(httpResponse).orElse(null);
 
         } catch (InterruptedException | IOException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
 

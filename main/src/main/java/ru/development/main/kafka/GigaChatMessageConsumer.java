@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import ru.development.main.service.GigaChatService;
@@ -25,13 +24,9 @@ public class GigaChatMessageConsumer {
             containerFactory = "kafkaGigaChatListenerContainerFactory"
     )
     public void consumerMessageInfo(@Payload ConsumerRecord<String, GigaChatRequestData> consumerData,
-                                    @Header(name = KafkaHeaders.RECEIVED_KEY, required = false) String key,
-                                    @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-                                    @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-                                    @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts) {
+                                    ConsumerRecordMetadata meta) {
         log.info("[KAFKA INFO] Received GigaChatMessageInfo: {}", consumerData.value());
-        log.info("[KAFKA INFO] Received Headers: key={}, partition={}, topic={}, ts={}",
-                key, partition, topic, ts);
+        log.info("[KAFKA INFO] ConsumerRecordMetadata: {}", meta);
 
         GigaChatRequestData data = consumerData.value();
         if(nonNull(data)){

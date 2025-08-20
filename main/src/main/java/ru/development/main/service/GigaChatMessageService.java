@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.development.main.aop.TrackExecutionTime;
 import org.springframework.http.HttpHeaders;
+import ru.development.main.model.AccessToken;
 import ru.development.main.model.dto.GigaChatModelInfoDto;
 import ru.development.main.model.dto.GigaChatResponse;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
@@ -17,8 +18,8 @@ import ru.development.infrastructurekafka.service.GigachatProducer;
 
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -57,33 +58,31 @@ public class GigaChatMessageService {
          **/
         try {
 
-            CompletableFuture<GigaChatModelInfoDto> feature = checkTokenService.checkAccessToken(
-                            servletRequest.getRemoteAddr()
-                    ).thenCompose(t -> CompletableFuture.supplyAsync(() -> {
-                        String token = t.getAccessToken();
-                        return gigaChatService.sendGigaChatMessage(
-                                correctMessage,
-                                token,
-                                finalUserRequestId
-                        );
-                    }, executorService).thenCompose(chatInfo ->
-                            CompletableFuture.supplyAsync(() -> {
-                                GigaChatRequestData requestData
-                                        = getGigaChatRequestData(chatInfo.content(), correctMessage,
-                                        finalUserRequestId);
-                                GigaChatProducerInfo gigaChatProducerInfo
-                                        = getGigaChatProducerInfo(servletRequest, finalUserRequestId);
+            var accessToken = checkTokenService.checkAccessToken(servletRequest.getRemoteAddr());
+            String token = accessToken.getAccessToken();
 
-                                gigachatProducer.sendMainMessage("gigachat.message", "key", requestData);
-                                gigachatProducer.sendInfoMessage("gigachat.info", gigaChatProducerInfo);
-                                return chatInfo;
-                            }, executorService).exceptionally(ex -> {
-                                log.error("[ERROR] Ошибка при отправке запроса: {}", ex.getMessage());
-                                throw new RuntimeException("Ошибка! Не удалось отправить запрос: %s".
-                                        formatted(ex.getMessage()));
-                            })));
+            var modelInfo = gigaChatService.sendGigaChatMessage(
+                    correctMessage,
+                    token,
+                    finalUserRequestId
+            );
 
-            return feature.join();
+            GigaChatRequestData requestData
+                    = getGigaChatRequestData(modelInfo.content(), correctMessage,
+                    finalUserRequestId);
+
+            gigachatProducer.sendMainMessage("gigachat.message", "key", requestData);
+
+            CompletableFuture.runAsync(() -> {
+                GigaChatProducerInfo gigaChatProducerInfo
+                        = getGigaChatProducerInfo(servletRequest, finalUserRequestId);
+                gigachatProducer.sendInfoMessage("gigachat.info", gigaChatProducerInfo);
+            }, executorService).exceptionally(ex -> {
+                log.error("[ERROR] Ошибка при отправке данных в топик: {}", "gigachat.info", ex);
+                return null;
+            });
+
+            return modelInfo;
         } catch (HttpClientException ex) {
             log.error("[ERROR] Ошибка! Не удалось выполнить запрос: {}", ex.getMessage());
             throw new RuntimeException(ex.getMessage(), ex);
@@ -114,6 +113,8 @@ public class GigaChatMessageService {
             log.info("[INFO] Превышенный лимит: {}, вырезанный контекст {}", exceededLength,
                     message.substring(MAX_MESSAGE_LENGTH, exceededLength));
             newMessage = message.substring(0, MAX_MESSAGE_LENGTH);
+        } else {
+            return message;
         }
 
         return newMessage;

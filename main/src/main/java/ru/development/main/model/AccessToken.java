@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AccessToken extends CompletableFuture<AccessToken> {
+public class AccessToken {
     @JsonProperty("access_token")
     String accessToken;
     @JsonProperty("expires_at")
