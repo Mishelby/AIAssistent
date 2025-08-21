@@ -46,15 +46,17 @@ public class EmbeddingService {
                     .input(createEmbeddingRequestDto.getInput())
                     .build());
 
-            List<DataForVectorDB> dataForVectorDBS = embedding.data().stream().map(embeddingData -> {
-                List<Float> vector = embeddingData.embedding();
-                return DataForVectorDB.builder()
-                        .embeddingId(1L)
-                        .embeddingVector(vector)
-                        .model(embedding.model())
-                        .category(createEmbeddingRequestDto.getCategory())
-                        .build();
-            }).toList();
+            List<DataForVectorDB> dataForVectorDBS = embedding.data()
+                    .stream()
+                    .map(embeddingData -> {
+                        List<Float> vector = embeddingData.embedding();
+                        return DataForVectorDB.builder()
+                                .embeddingId(1L)
+                                .embeddingVector(vector)
+                                .model(embedding.model())
+                                .category(createEmbeddingRequestDto.getCategory())
+                                .build();
+                    }).toList();
 
             milvusVectorService.insertDataIntoVectorDB(
                     createEmbeddingRequestDto.getCollectionName(),

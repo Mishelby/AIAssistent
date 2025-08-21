@@ -36,10 +36,9 @@ public class GigaChatService {
     private final GigaChatModelInfoRepository gigaChatModelInfoRepository;
     private final GigaChatModelInfoMapper gigaChatModelInfoMapper;
 
-    private static final int CONNECT_TIMEOUT = 10;
-    private static final int READ_TIMEOUT = 60;
+    public static final int CONNECT_TIMEOUT = 10;
+    public static final int READ_TIMEOUT = 60;
 
-    @Transactional
     @SystemMessage(value = "Ты учитель математики и физики")
     @UserMessage(value = "Привет пользователь!")
     public GigaChatModelInfoDto sendGigaChatMessage(

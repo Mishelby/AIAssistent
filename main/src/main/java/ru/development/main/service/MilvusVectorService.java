@@ -9,13 +9,11 @@ import io.milvus.v2.common.IndexParam;
 import io.milvus.v2.service.collection.request.CreateCollectionReq;
 import io.milvus.v2.service.partition.request.CreatePartitionReq;
 import io.milvus.v2.service.vector.request.InsertReq;
-import io.milvus.v2.service.vector.response.InsertResp;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.development.main.model.dto.DataForVectorDB;
 
-import java.awt.print.Book;
 import java.util.ArrayList;
 import java.util.List;
 
