@@ -2,14 +2,13 @@ package ru.development.main.service;
 
 import chat.giga.client.GigaChatClient;
 import chat.giga.client.auth.AuthClient;
-import chat.giga.model.completion.ChatFunction;
-import chat.giga.model.completion.ChatFunctionFewShotExample;
-import chat.giga.model.completion.ChatFunctionParameters;
-import chat.giga.model.completion.ChatFunctionParametersProperty;
+import chat.giga.model.ModelName;
+import chat.giga.model.completion.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.apache.hadoop.hdfs.protocol.HdfsConstants.READ_TIMEOUT;
@@ -42,8 +41,16 @@ public class FunctionService {
     }
 
 
-    public void createFunction() {
-        ChatFunction function = ChatFunction.builder()
+    public void createFunction(String bearerToken, String content) {
+        var gigaChatClient = getGigaChatClient(bearerToken);
+        var messages = new ArrayList<ChatMessage>();
+
+        messages.add(ChatMessage.builder()
+                .role(ChatMessageRole.USER)
+                .content(content)
+                .build());
+
+        var function = ChatFunction.builder()
                 .name("create_event")
                 .description("Получение документов из mockapi.io по переданным параметрам")
                 .parameters(ChatFunctionParameters.builder()
@@ -101,6 +108,16 @@ public class FunctionService {
                                 .build())
                         .build())
                 .build();
+
+        var completionResponse = gigaChatClient.completions(CompletionRequest.builder()
+                .model(ModelName.GIGA_CHAT)
+                .messages(messages)
+                .function(function)
+                .build());
+
+        var message = completionResponse.choices()
+                .getFirst()
+                .message();
 
     }
 }
