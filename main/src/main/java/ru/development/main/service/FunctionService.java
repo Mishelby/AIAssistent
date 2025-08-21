@@ -51,7 +51,7 @@ public class FunctionService {
                 .build());
 
         var function = ChatFunction.builder()
-                .name("create_event")
+                .name("search_document")
                 .description("Получение документов из mockapi.io по переданным параметрам")
                 .parameters(ChatFunctionParameters.builder()
                         .type("object")
