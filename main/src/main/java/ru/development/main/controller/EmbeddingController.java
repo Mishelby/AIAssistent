@@ -23,6 +23,6 @@ public class EmbeddingController {
             HttpServletRequest httpServletRequest,
             @RequestBody CreateEmbeddingRequestDto createEmbeddingRequestDto) {
         String embedding = embeddingService.createEmbedding(httpServletRequest, createEmbeddingRequestDto);
-        return ResponseEntity.ok().body(embedding.toString());
+        return ResponseEntity.ok().body(embedding);
     }
 }

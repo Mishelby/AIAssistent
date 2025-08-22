@@ -10,6 +10,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Кастомный ExecutorService, посмотрел на баелдунге гайд, немного переделал под себя
+ */
+
 @Slf4j
 @Configuration
 public class ExecutorThreadPoolConfig {
@@ -27,10 +31,10 @@ public class ExecutorThreadPoolConfig {
                 new LinkedBlockingQueue<>(100),
                 r -> {
                     Thread th = new Thread(r);
-                    th.setName("custom-thread-" + counter.getAndIncrement());
+                    th.setName("completable-feature-thread-" + counter.getAndIncrement());
                     th.setDaemon(false);
-                    log.info("[INFO] custom-thread-{} started", th.getName());
-                    log.info("[INFO] custom-thread-{} thread group name", th.getThreadGroup().getName());
+                    log.info("[INFO] completable-feature-thread-{} started", th.getName());
+                    log.info("[INFO] completable-feature-thread-{} thread group name", th.getThreadGroup().getName());
                     return th;
                 },
                 new ThreadPoolExecutor.CallerRunsPolicy()
