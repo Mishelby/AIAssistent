@@ -26,13 +26,12 @@ public class JvmMetricsConfig {
         try {
             HTTPServer httpServer = HTTPServer.builder().port(9400).buildAndStart();
             log.info("HTTP server started on port: {}", httpServer.getPort());
-            Thread.currentThread().join();
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
 
-        return jvmMetrics();
+        return null;
     }
 
     @Bean

@@ -1,6 +1,7 @@
 package ru.development.infrastructurekafka.kafkaConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -22,9 +23,14 @@ import ru.development.infrastructurekafka.model.GigaChatRequestData;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Configuration
 @EnableKafka
 public class KafkaConfig {
+
+    static {
+        log.info("[KAFKA INFO] Kafka configuration loaded");
+    }
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;

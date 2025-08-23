@@ -3,6 +3,7 @@ import org.springframework.boot.gradle.tasks.run.BootRun
 dependencies {
     implementation project(':core')
     implementation project(':infrastructure-kafka')
+    implementation project(':common')
 
     implementation 'chat.giga:langchain4j-gigachat:0.1.11'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5'
@@ -20,6 +21,11 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
 }
 
+
+bootRun {
+    mainClass = 'ru.development.main.MainApplication'
+}
+
 tasks.register('debug', BootRun) {
     dependsOn 'classes'
     group = 'application'
@@ -31,8 +37,6 @@ tasks.register('debug', BootRun) {
             '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005',
             '-Dfile.encoding=UTF-8'
     ]
-
-    mainClass.set('ru.development.main.MainApplication')
 
     classpath = sourceSets.main.runtimeClasspath
 }

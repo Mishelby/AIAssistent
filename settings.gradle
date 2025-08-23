@@ -7,4 +7,5 @@ pluginManagement {
 }
 
 rootProject.name = 'AIAgent'
-include  'main', 'core', 'infrastructure-kafka', 'api', 'common'
+include 'main', 'core', 'infrastructure-kafka', 'api', 'common'
+

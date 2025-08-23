@@ -10,7 +10,7 @@ spring:
     password:
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: 127.0.0.1:9092
     groups:
       chat-info: gigachat-info-group
       request-data: gigachat-request-group
