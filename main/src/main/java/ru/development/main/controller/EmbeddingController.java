@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.development.main.aop.HttpRequestServiceTime;
+import ru.development.main.aop.HttpRequestsCounter;
 import ru.development.main.model.dto.CreateEmbeddingRequestDto;
 import ru.development.main.service.EmbeddingService;
 
@@ -19,6 +21,8 @@ public class EmbeddingController {
     private final EmbeddingService embeddingService;
 
     @PostMapping
+    @HttpRequestsCounter
+    @HttpRequestServiceTime
     public ResponseEntity<String> createEmbedding(
             HttpServletRequest httpServletRequest,
             @RequestBody CreateEmbeddingRequestDto createEmbeddingRequestDto) {

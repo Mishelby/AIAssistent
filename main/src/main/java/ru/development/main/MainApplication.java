@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
-        "ru.development.main", "ru.development.main", "ru.development.infrastructurekafka", "ru.development.common"
+        "ru.development.main", "ru.development.core", "ru.development.common", "ru.development.infrastructurekafka"
 })
 public class MainApplication {
     public static void main(String[] args) {

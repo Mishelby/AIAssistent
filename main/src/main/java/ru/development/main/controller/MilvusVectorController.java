@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.development.main.aop.HttpRequestServiceTime;
 import ru.development.main.model.CreateCollectionRequest;
 import ru.development.main.service.MilvusVectorService;
 
@@ -21,6 +22,7 @@ public class MilvusVectorController {
     private final MilvusVectorService milvusVectorService;
 
     @PostMapping("/collection")
+    @HttpRequestServiceTime
     public ResponseEntity<String> createCollection(@RequestBody CreateCollectionRequest request) {
         milvusVectorService.createCollectionInVectorDB(
                 request.getCollectionName(),

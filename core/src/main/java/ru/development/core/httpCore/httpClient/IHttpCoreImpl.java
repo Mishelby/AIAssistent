@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 import chat.giga.http.client.sse.SseListener;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -8,14 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;

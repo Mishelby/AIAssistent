@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.development.main.aop.HttpRequestServiceTime;
 import ru.development.main.aop.HttpRequestsCounter;
 import ru.development.main.model.dto.GigaChatResponse;
 import ru.development.main.service.GigaChatMessageService;
@@ -21,6 +22,7 @@ public class GigaChatController {
 
     @PostMapping("/ask")
     @HttpRequestsCounter
+    @HttpRequestServiceTime
     public ResponseEntity<GigaChatResponse> sendMessage(
             HttpServletRequest servletRequest,
             @RequestHeader HttpHeaders headers,

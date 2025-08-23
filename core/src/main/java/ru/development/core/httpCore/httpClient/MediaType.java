@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 public class MediaType {
     public static final String APPLICATION_FORM_URLENCODED = "application/x-www-form-urlencoded";

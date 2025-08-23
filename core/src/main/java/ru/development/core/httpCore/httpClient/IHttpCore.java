@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;

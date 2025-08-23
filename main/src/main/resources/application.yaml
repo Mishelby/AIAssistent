@@ -1,6 +1,6 @@
 spring:
   application:
-    name: core
+    name: main
   profiles:
     active: dev
 

@@ -69,7 +69,8 @@ public class KafkaConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        JsonDeserializer<GigaChatProducerInfo> jsonDeserializer = new JsonDeserializer<>(GigaChatProducerInfo.class, objectMapper);
+        JsonDeserializer<GigaChatProducerInfo> jsonDeserializer
+                = new JsonDeserializer<>(GigaChatProducerInfo.class, objectMapper);
 
         return new DefaultKafkaConsumerFactory<>(
                 props,

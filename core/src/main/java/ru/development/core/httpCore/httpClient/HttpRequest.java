@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 import lombok.Builder;
 import lombok.Value;

@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import ru.development.main.httpCore.httpClient.HttpClientException;
-import ru.development.main.httpCore.httpClient.IHttpCoreImpl;
+import ru.development.core.httpCore.httpClient.HttpClientException;
+import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
 import ru.development.main.model.AccessToken;
 
 import java.net.URLEncoder;
@@ -18,7 +18,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;

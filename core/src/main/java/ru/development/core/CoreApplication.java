@@ -1,4 +1,4 @@
-package ru.development.main;
+package ru.development.core;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.baseUrlPrefix;
+package ru.development.core.httpCore.baseUrlPrefix;
 
 import lombok.Getter;
 import lombok.Setter;

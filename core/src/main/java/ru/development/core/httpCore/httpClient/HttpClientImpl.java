@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 import chat.giga.http.client.sse.SseListener;
 import lombok.extern.slf4j.Slf4j;

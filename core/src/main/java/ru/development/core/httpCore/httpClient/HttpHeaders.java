@@ -1,4 +1,4 @@
-package ru.development.main.httpCore.httpClient;
+package ru.development.core.httpCore.httpClient;
 
 public class HttpHeaders {
     public static final String ACCEPT = "Accept";
