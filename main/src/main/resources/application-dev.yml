@@ -1,6 +1,9 @@
 server:
   port: 8080
 
+cache:
+  fixedRateValue: 3600000
+
 spring:
   # Database + jpa config
   datasource:

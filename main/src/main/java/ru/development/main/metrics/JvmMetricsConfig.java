@@ -22,7 +22,7 @@ import static io.prometheus.metrics.model.snapshots.Unit.SECONDS;
 @Configuration
 public class JvmMetricsConfig {
 
-    @Bean(initMethod = "start", destroyMethod = "stop")
+    @Bean(destroyMethod = "stop")
     public HTTPServer prometheusHttpServer() {
         try {
             return HTTPServer.builder()

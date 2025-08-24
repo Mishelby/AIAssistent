@@ -1,5 +1,6 @@
 package ru.development.main.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,37 +11,34 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.development.core.httpCore.httpClient.HttpClientException;
 import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
+import ru.development.main.cash.AccessTokenCache;
 import ru.development.main.model.AccessToken;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import static java.util.Objects.nonNull;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CheckTokenService {
-    // TODO Пока вместо кеша
-    private static final Map<String, AccessToken> accessTokens = new HashMap<>();
+    private final AccessTokenCache accessTokenCache;
     private final IHttpCoreImpl httpCore;
 
     // Проверяю, есть ли токен в кеше, если нет, отправляю запрос на получение нового
     public @NonNull AccessToken checkAccessToken(final String remoteAddr) {
-        if (accessTokens.containsKey(remoteAddr) && nonNull(remoteAddr)) {
-            AccessToken accessToken = accessTokens.get(remoteAddr);
+        if (accessTokenCache.containsKey(remoteAddr) && nonNull(remoteAddr)) {
+            AccessToken accessToken = accessTokenCache.get(remoteAddr);
             long millis = System.currentTimeMillis();
 
             if (accessToken.getExpiresAt() < millis) {
                 log.info("[INFO] Токен будет действовать ещё: {}", ((millis - accessToken.getExpiresAt()) * 60));
                 return accessToken;
             } else {
-                accessTokens.remove(remoteAddr);
+                accessTokenCache.remove(remoteAddr);
                 return getAccessToken(remoteAddr);
             }
         } else {
@@ -55,7 +53,7 @@ public class CheckTokenService {
         try {
             ResponseEntity<AccessToken> responseEntity = getAccessTokenResponseEntity(formData);
             if (nonNull(responseEntity) && nonNull(responseEntity.getBody())) {
-                accessTokens.put(remoteAddr, responseEntity.getBody());
+                accessTokenCache.put(remoteAddr, responseEntity.getBody());
                 return responseEntity.getBody();
             } else {
                 // ! Хз, надо ли? Можно просто пробросить ошибку и не ставить @NonNull !
@@ -114,5 +112,10 @@ public class CheckTokenService {
 
     private String encode(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("[CACHE INFO] Кеш для токена доступа инициализирован: {}", accessTokenCache.getFullInfo());
     }
 }
