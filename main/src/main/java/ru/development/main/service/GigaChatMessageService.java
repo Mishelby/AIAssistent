@@ -128,11 +128,16 @@ public class GigaChatMessageService {
     // Формирование информации для Producer (Пока просто указал какие-то базовые данные) :)
     private static GigaChatProducerInfo getGigaChatProducerInfo(
             final HttpServletRequest servletRequest,
-            final String finalUserRequestId) {
+            final String finalUserRequestId
+    ) {
+        String sessionId = nonNull(servletRequest.getSession())
+                ? servletRequest.getSession().getId()
+                : "UNKNOW SESSION";
+
         return GigaChatProducerInfo.builder()
                 .key(UUID.randomUUID().toString())
                 .userRequestId(finalUserRequestId)
-                .sessionId(servletRequest.getSession().getId())
+                .sessionId(sessionId)
                 .metadata(List.of(String.format(Thread.currentThread().getName(),
                         getHeadersNameFromRequest(servletRequest.getHeaderNames()))))
                 .build();

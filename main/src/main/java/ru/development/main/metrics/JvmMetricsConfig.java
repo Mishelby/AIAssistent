@@ -1,11 +1,13 @@
 package ru.development.main.metrics;
 
+import com.azure.core.annotation.Post;
 import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Gauge;
 import io.prometheus.metrics.core.metrics.Histogram;
 import io.prometheus.metrics.exporter.httpserver.HTTPServer;
 import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,17 +23,14 @@ import static io.prometheus.metrics.model.snapshots.Unit.SECONDS;
 public class JvmMetricsConfig {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
-    public JvmMetrics jvmMetrics() {
-        JvmMetrics.builder().register();
+    public HTTPServer prometheusHttpServer() {
         try {
-            HTTPServer httpServer = HTTPServer.builder().port(9400).buildAndStart();
-            log.info("HTTP server started on port: {}", httpServer.getPort());
+            return HTTPServer.builder()
+                    .port(9400)
+                    .buildAndStart();
         } catch (IOException e) {
-            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-
-        return null;
     }
 
     @Bean
@@ -77,5 +76,10 @@ public class JvmMetricsConfig {
                 .unit(SECONDS)
                 .labelNames("method", "path", "status_code")
                 .register();
+    }
+
+    @PostConstruct
+    public void init(){
+        JvmMetrics.builder().register();
     }
 }
