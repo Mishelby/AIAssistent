@@ -1,12 +1,11 @@
 package ru.development.main.config;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.development.main.cash.AccessTokenCache;
-import ru.development.main.cash.AccessTokenCacheImpl;
-import ru.development.main.cash.CachePrefix;
+import ru.development.main.cache.AccessTokenCache;
+import ru.development.main.cache.AccessTokenCacheImpl;
+import ru.development.main.cache.CachePrefix;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;

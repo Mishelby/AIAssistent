@@ -1,4 +1,4 @@
-package ru.development.main.cash;
+package ru.development.main.cache;
 
 import lombok.Getter;
 import lombok.Setter;

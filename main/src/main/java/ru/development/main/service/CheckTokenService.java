@@ -11,7 +11,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.development.core.httpCore.httpClient.HttpClientException;
 import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
-import ru.development.main.cash.AccessTokenCache;
+import ru.development.main.aop.Retryable;
+import ru.development.main.cache.AccessTokenCache;
 import ru.development.main.model.AccessToken;
 
 import java.net.URLEncoder;
@@ -65,6 +66,7 @@ public class CheckTokenService {
         }
     }
 
+    @Retryable(name = "getAccessTokenResponseEntity")
     private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
         return httpCore.post(
                 "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",

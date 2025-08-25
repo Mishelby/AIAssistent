@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.development.main.aop.Retryable;
 import ru.development.main.mapper.GigaChatModelInfoMapper;
 import ru.development.main.model.GigaChatModelInfo;
 import ru.development.main.model.dto.GigaChatModelInfoDto;
@@ -41,6 +42,7 @@ public class GigaChatService {
 
     @SystemMessage(value = "Ты учитель математики и физики")
     @UserMessage(value = "Привет пользователь!")
+    @Retryable(name = "sendGigaChatMessage")
     public GigaChatModelInfoDto sendGigaChatMessage(
             String message,
             String bearerToken,
