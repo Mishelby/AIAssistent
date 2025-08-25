@@ -13,9 +13,12 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.util.backoff.FixedBackOff;
 import ru.development.infrastructurekafka.model.CheckTokenRequest;
 import ru.development.infrastructurekafka.model.GigaChatProducerInfo;
 import ru.development.infrastructurekafka.model.GigaChatRequestData;
@@ -86,14 +89,28 @@ public class KafkaConfig {
     }
 
     @Bean
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(
+            KafkaTemplate<String, Object> kafkaChatInfoTemplate
+    ) {
+        return new DeadLetterPublishingRecoverer(kafkaChatInfoTemplate);
+    }
+
+    @Bean
     public ConcurrentKafkaListenerContainerFactory<String, GigaChatProducerInfo> kafkaChatInfoListenerContainerFactory(
-            final ConsumerFactory<String, GigaChatProducerInfo> consumerChatInfoFactoryFactory
+            final ConsumerFactory<String, GigaChatProducerInfo> consumerChatInfoFactoryFactory,
+            final DeadLetterPublishingRecoverer deadLetterPublishingRecoverer
     ) {
         final ConcurrentKafkaListenerContainerFactory<String, GigaChatProducerInfo> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerChatInfoFactoryFactory);
+
+        DefaultErrorHandler errorHandler
+                = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(2000L, 3));
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
+
 
     /**
      * Конфигурация для GigaChatMessage
@@ -146,11 +163,17 @@ public class KafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, GigaChatRequestData> kafkaGigaChatListenerContainerFactory(
-            final ConsumerFactory<String, GigaChatRequestData> consumerGigaChatFactoryFactory
+            final ConsumerFactory<String, GigaChatRequestData> consumerGigaChatFactoryFactory,
+            final DeadLetterPublishingRecoverer deadLetterPublishingRecoverer
     ) {
         final ConcurrentKafkaListenerContainerFactory<String, GigaChatRequestData> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerGigaChatFactoryFactory);
+
+        DefaultErrorHandler errorHandler
+                = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(2000L, 3));
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
 
@@ -201,11 +224,16 @@ public class KafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, CheckTokenRequest> checkTokenKafkaListenerContainerFactory(
-            final ConsumerFactory<String, CheckTokenRequest> consumerGigaChatFactoryFactory
+            final ConsumerFactory<String, CheckTokenRequest> consumerGigaChatFactoryFactory,
+            final DeadLetterPublishingRecoverer deadLetterPublishingRecoverer
     ) {
         final ConcurrentKafkaListenerContainerFactory<String, CheckTokenRequest> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerGigaChatFactoryFactory);
+        DefaultErrorHandler errorHandler
+                = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(2000L, 3));
+        factory.setCommonErrorHandler(errorHandler);
+
         return factory;
     }
 

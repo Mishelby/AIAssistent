@@ -30,7 +30,6 @@ public class RetryableAspect {
     }
 
     @Around("@annotation(Retryable)")
-    @SneakyThrows
     public Object getRetryable(ProceedingJoinPoint joinPoint) throws Throwable {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = nonNull(attributes) ?  attributes.getRequest() : null;
@@ -43,9 +42,11 @@ public class RetryableAspect {
                 .methodName(method);
         List<String> params = new ArrayList<>();
 
-        request.getAttributeNames().asIterator().forEachRemaining(name -> {
-            if (nonNull(name)) params.add(name);
-        });
+        if(nonNull(request)){
+            request.getAttributeNames().asIterator().forEachRemaining(name -> {
+                if (nonNull(name)) params.add(name);
+            });
+        }
         metadata.params(params).build();
 
         return retryTemplate.execute((RetryCallback<Object, Throwable>) retryContext -> {
@@ -63,6 +64,5 @@ public class RetryableAspect {
                 throw e;
             }
         });
-
     }
 }
