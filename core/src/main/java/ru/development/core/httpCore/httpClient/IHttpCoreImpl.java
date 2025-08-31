@@ -1,22 +1,21 @@
 package ru.development.core.httpCore.httpClient;
 
-import chat.giga.http.client.sse.SseListener;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
-import static java.util.Objects.nonNull;
 
 @Slf4j
 @Component
@@ -26,91 +25,83 @@ public class IHttpCoreImpl implements IHttpCore {
 
     public IHttpCoreImpl(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        httpClient = new HttpClientBuilderImpl()
-                .connectTimeout(Duration.ofSeconds(30))
-                .readTimeout(Duration.ofSeconds(30))
-                .decorator(null)
+        httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(20L))
+//                .authenticator(Authenticator.getDefault())
                 .build();
+
     }
 
     @Override
     public <T> ResponseEntity<T> get(String url, HttpHeaders headers, Class<T> responseType) {
-        Map<String, List<String>> headerMap = new HashMap<>(headers);
-        HttpRequest httpRequest = HttpRequest.builder()
-                .url(url)
-                .headers(headerMap)
-                .method(HttpMethod.GET)
-                .body(null)
+        String[] headersNames = getHeadersNames(headers);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(15L))
+                .headers(headersNames)
+                .method(HttpMethod.GET.name(), HttpRequest.BodyPublishers.noBody())
                 .build();
 
-        HttpResponse response = null;
+        HttpResponse<String> response;
+        T responseBody;
 
         try {
-            response = httpClient.execute(httpRequest);
-        } catch (IOException e) {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            responseBody = objectMapper.readValue(response.body(), responseType);
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
 
         return ResponseEntity.status(response.statusCode())
-                .body(response.bodyAsString(responseType));
+                .body(responseBody);
     }
 
 
     @Override
     public <T> ResponseEntity<T> post(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType) {
-        Map<String, List<String>> headerMap = new HashMap<>(headers);
-        HttpRequest httpRequest = HttpRequest.builder()
-                .url(url)
-                .headers(headerMap)
-                .method(HttpMethod.POST)
-                .body(encodeFormData(bodyValue))
+        String[] headersNames = getHeadersNames(headers);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(15L))
+                .headers(headersNames)
+                .method(HttpMethod.POST.name(),
+                        HttpRequest.BodyPublishers.ofByteArray(bodyValue.toString().getBytes()))
                 .build();
 
-        HttpResponse response = null;
-        T jsonResponseBody = null;
+        HttpResponse<String> response;
+        T responseBody;
 
         try {
-            response = httpClient.execute(httpRequest);
-            jsonResponseBody = objectMapper.readValue(response.body(), responseType);
-        } catch (IOException e) {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            responseBody = objectMapper.readValue(response.body(), responseType);
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
 
         return ResponseEntity.status(response.statusCode())
-                .body(jsonResponseBody);
+                .body(responseBody);
+
     }
 
-    // TODO Пока не работает (а может и не заработает)
-    private Function<HttpClient, HttpClient> decoratorClient = client -> new HttpClient() {
-        @Override
-        public HttpResponse execute(HttpRequest httpRequest) throws IOException {
-            try {
-                return httpClient.execute(httpRequest);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override
-        public void execute(HttpRequest request, SseListener listener) {
-
-        }
-
-        @Override
-        public CompletableFuture<HttpResponse> executeAsync(HttpRequest request) {
-            return null;
-        }
-    };
-
-    private byte[] encodeFormData(Object bodyValue) {
-        if (nonNull(bodyValue)) {
-            try {
-                return objectMapper.writeValueAsBytes(bodyValue);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return new byte[0];
+    @Override
+    public <T> CompletableFuture<ResponseEntity<T>> postAsync(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType) {
+        return null;
     }
+
+
+    private static String[] getHeadersNames(HttpHeaders headers) {
+        return headers.entrySet()
+                .stream()
+                .flatMap(entry -> entry.getValue()
+                        .stream().map(value -> new String[]{entry.getKey(), value}))
+                .flatMap(Arrays::stream)
+                .toArray(String[]::new);
+    }
+
 
 }

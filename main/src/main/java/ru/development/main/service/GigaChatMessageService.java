@@ -49,10 +49,6 @@ public class GigaChatMessageService {
         }
         final String finalUserRequestId = userRequestId;
 
-        /**
-         * Честно, пока не особо понимаю суть кафки. Т.к у меня почти вся логика выполняется локально, буду добавлять
-         * сторонние сервисы, что бы можно было отправлять асинхронные запросы
-         **/
         try {
             var accessToken = checkTokenService.checkAccessToken(servletRequest.getRemoteAddr());
             String token = accessToken.getAccessToken();
