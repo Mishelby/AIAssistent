@@ -1,32 +1,26 @@
 package ru.development.core.httpCore.httpClient;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.nio.charset.StandardCharsets;
 
 import static java.util.Objects.nonNull;
 
+@Getter
+@Setter
 public class HttpClientException extends RuntimeException {
-    private final int statusCode;
-    private final byte[] responseBody;
+    private int statusCode;
+    private byte[] body;
 
-    public HttpClientException(int statusCode, byte[] responseBody) {
-        super(String.format("StatusCode: %d, responseBody: %s", statusCode,
-                nonNull(responseBody) && responseBody.length > 0 ? new String(responseBody, StandardCharsets.UTF_8) : null)
-        );
-        this.statusCode = statusCode;
-        this.responseBody = responseBody;
-    }
-
-    public int statusCode() {
-        return statusCode;
-    }
-
-    public byte[] body() {
-        return responseBody;
+    public HttpClientException(int statusCode, byte[] body) {
+        super(String.format("HTTP Error exception, status code=%s, body=%s", statusCode,
+                nonNull(body) && body.length > 0 ? new String(body, StandardCharsets.UTF_8) : null));
     }
 
     public String bodyAsString() {
-        if (nonNull(responseBody) && responseBody.length > 0) {
-            return new String(responseBody, StandardCharsets.UTF_8);
+        if (nonNull(body) && body.length > 0) {
+            return new String(body, StandardCharsets.UTF_8);
         } else {
             return null;
         }
