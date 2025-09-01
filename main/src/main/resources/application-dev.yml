@@ -17,7 +17,6 @@ spring:
     groups:
       chat-info: gigachat-info-group
       request-data: gigachat-request-group
-      token-data: check-token-group
 
   output:
     ansi:

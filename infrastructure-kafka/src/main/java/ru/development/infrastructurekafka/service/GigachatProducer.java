@@ -41,7 +41,6 @@ public class GigachatProducer {
                 topic, key, gigaChatProducerInfo
         );
         log.info("[KAFKA INFO] Sending Giga-chat-info ProducerRecord {}", producerRecord);
-
         deadLetterKafkaTemplate.send(producerRecord);
     }
 }

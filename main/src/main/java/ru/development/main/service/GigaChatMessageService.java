@@ -151,6 +151,4 @@ public class GigaChatMessageService {
 
         return result;
     }
-
-
 }

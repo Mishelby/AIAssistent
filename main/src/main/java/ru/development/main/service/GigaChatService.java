@@ -112,12 +112,4 @@ public class GigaChatService {
 
         gigaChatModelInfoRepository.save(entity);
     }
-
-    private static GigaChatResponseDto getGigaChatResponseDto(GigaChatModelInfo modelInfo) {
-        return GigaChatResponseDto.builder()
-                .message(modelInfo.message())
-                .modelName(modelInfo.modelName())
-                .gigaChatId(modelInfo.id())
-                .build();
-    }
 }

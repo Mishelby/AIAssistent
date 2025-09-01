@@ -3,14 +3,18 @@ package ru.development.main.service;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import ru.development.core.httpCore.httpClient.Connection;
+import ru.development.core.httpCore.httpClient.HttpClientConnection;
 import ru.development.core.httpCore.httpClient.HttpClientException;
-import ru.development.core.httpCore.httpClient.IHttpCoreImpl;
 import ru.development.main.aop.Retryable;
 import ru.development.main.cache.AccessTokenCache;
 import ru.development.main.model.AccessToken;
@@ -20,6 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Slf4j
@@ -27,7 +33,7 @@ import static java.util.Objects.nonNull;
 @RequiredArgsConstructor
 public class CheckTokenService {
     private final AccessTokenCache accessTokenCache;
-    private final IHttpCoreImpl httpCore;
+    private final Connection connection;
 
     // Проверяю, есть ли токен в кеше, если нет, отправляю запрос на получение нового
     public @NonNull AccessToken checkAccessToken(final String remoteAddr) {
@@ -35,8 +41,8 @@ public class CheckTokenService {
             AccessToken accessToken = accessTokenCache.get(remoteAddr);
             long millis = System.currentTimeMillis();
 
-            if (accessToken.getExpiresAt() < millis) {
-                log.info("[INFO] Токен будет действовать ещё: {}", ((millis - accessToken.getExpiresAt()) * 60));
+            if (accessToken.getExpiresAt() > millis) {
+                log.info("[INFO] Токен будет действовать ещё: {} минут", (((accessToken.getExpiresAt() - millis) / 1000) / 60));
                 return accessToken;
             } else {
                 accessTokenCache.remove(remoteAddr);
@@ -66,14 +72,36 @@ public class CheckTokenService {
         }
     }
 
-    @Retryable(name = "getAccessTokenResponseEntity")
     private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
-        return httpCore.post(
-                "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-                getHeaders(),
-                formDataToString(formData),
-                AccessToken.class
-        );
+        return retryableExecute(context ->
+                        connection.getHttpConnection().getIHttpCore().post(
+                                "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+                                getHeaders(),
+                                formDataToString(formData),
+                                AccessToken.class
+                        )
+                , "getAccessTokenResponseEntity");
+    }
+
+    @SneakyThrows
+    public <T> ResponseEntity<T> retryableExecute(RetryCallback<ResponseEntity<T>, Throwable> retryCallback,
+                                                  String methodName) {
+        RetryTemplate retryTemplate = connection.getHttpConnection().getRetryTemplate();
+        return retryTemplate.execute(context -> {
+            context.setAttribute("methodName", methodName);
+            log.info("[RETRYABLE INFO] Попытка вызвать метод: {}", methodName);
+            try {
+                ResponseEntity<T> response = retryCallback.doWithRetry(context);
+                if (isNull(response.getBody())) {
+                    throw new HttpClientException(response.getStatusCode().value(), new byte[0]);
+                }
+                return response;
+            } catch (Throwable e) {
+                log.warn("[RETRYABLE WARN] Ошибка при вызове метода: {}, попытка: {}",
+                        methodName, context.getRetryCount() + 1);
+                throw e;
+            }
+        });
     }
 
     // Здесь захардкодил ключ аутентификации, что бы сразу отправить его в заголовках и получить токен доступа
@@ -92,6 +120,8 @@ public class CheckTokenService {
         return httpHeaders;
     }
 
+
+    // TODO Это надо переделать, т.к я убрал надстройку, использую java.net.HttpClient
 
     /**
      * Эти три метода нужны для того, что бы отправить scope в теле запроса, т.к я сделал надстройку над Http клиентом

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.hc.client5.http.HttpResponseException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -25,14 +24,14 @@ import static java.util.Objects.nonNull;
 
 @Slf4j
 @Component
-public class IHttpCoreImpl implements IHttpCore {
+public final class IHttpCoreImpl implements IHttpCore {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final ExecutorService executorService;
+    private final ExecutorService coreExecutorService;
 
     public IHttpCoreImpl(ObjectMapper objectMapper, ExecutorService executorService) {
         this.objectMapper = objectMapper;
-        this.executorService = executorService;
+        this.coreExecutorService = executorService;
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -59,7 +58,6 @@ public class IHttpCoreImpl implements IHttpCore {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-
     }
 
 
@@ -82,8 +80,6 @@ public class IHttpCoreImpl implements IHttpCore {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-
-
     }
 
     @Override
@@ -114,8 +110,8 @@ public class IHttpCoreImpl implements IHttpCore {
                     }
                 }).exceptionally(ex -> {
                     Throwable cause = nonNull(ex.getCause()) ? ex.getCause() : ex;
-                    if (cause instanceof HttpClientException) {
-                        throw (HttpClientException) cause;
+                    if (cause instanceof HttpClientException httpClientException) {
+                        throw httpClientException;
                     } else {
                         throw new RuntimeException(cause);
                     }

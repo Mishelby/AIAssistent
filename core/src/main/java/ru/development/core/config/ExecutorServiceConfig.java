@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 public class ExecutorServiceConfig {
 
     @Bean
-    public ExecutorService executorService() {
+    public ExecutorService coreExecutorService() {
         return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 }
