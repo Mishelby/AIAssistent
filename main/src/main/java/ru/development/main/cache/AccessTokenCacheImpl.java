@@ -12,6 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.nonNull;
 
+/**
+ * TODO Надо добавить хранение кеша локально, т.к сейчас он удаляется после каждого запуска
+ * Scheduled надо переделать под потоки? Сейчас он независимо чистит кеш каждые x минут
+ */
+
 @Slf4j
 @Getter
 @Setter
@@ -55,7 +60,7 @@ public class AccessTokenCacheImpl implements AccessTokenCache {
     }
 
     @Override
-    public String getFullInfo(){
+    public String getFullInfo() {
         return "Cache info: tokens " + accessTokens + " duration " + cashDuration;
     }
 
@@ -75,6 +80,7 @@ public class AccessTokenCacheImpl implements AccessTokenCache {
             this.map = map;
             return this;
         }
+
         public AccessTokenCacheImpl build() {
             return new AccessTokenCacheImpl(this);
         }

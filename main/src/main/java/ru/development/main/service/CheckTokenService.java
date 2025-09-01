@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.development.core.httpCore.httpClient.Connection;
-import ru.development.core.httpCore.httpClient.HttpClientConnection;
 import ru.development.core.httpCore.httpClient.HttpClientException;
-import ru.development.main.aop.Retryable;
 import ru.development.main.cache.AccessTokenCache;
 import ru.development.main.model.AccessToken;
 

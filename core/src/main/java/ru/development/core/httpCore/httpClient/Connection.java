@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Component;
 
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+
 @Slf4j
 @Value
 @Component

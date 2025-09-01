@@ -11,4 +11,6 @@ public interface IHttpCore {
     <T> ResponseEntity<T> post(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType);
 
     <T> CompletableFuture<ResponseEntity<T>> postAsync(String url, HttpHeaders headers, Object bodyValue, Class<T> responseType);
+
+    IHttpCoreImpl getHttpCoreImpl();
 }

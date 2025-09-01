@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,8 +34,14 @@ public final class IHttpCoreImpl implements IHttpCore {
     public IHttpCoreImpl(ObjectMapper objectMapper, ExecutorService executorService) {
         this.objectMapper = objectMapper;
         this.coreExecutorService = executorService;
+
+        // Временно оставил здесь, перенесу в конфиг и сделаю бином
+        CookieManager cookieManager = new CookieManager();
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+
         httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
+                .cookieHandler(cookieManager)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(20L))
                 .build();
@@ -118,6 +126,10 @@ public final class IHttpCoreImpl implements IHttpCore {
                 });
     }
 
+    @Override
+    public IHttpCoreImpl getHttpCoreImpl() {
+        return this;
+    }
 
     private static String[] getHeadersNames(HttpHeaders headers) {
         return headers.entrySet()
@@ -127,6 +139,4 @@ public final class IHttpCoreImpl implements IHttpCore {
                 .flatMap(Arrays::stream)
                 .toArray(String[]::new);
     }
-
-
 }
