@@ -31,7 +31,7 @@ public class HttpClientConnection implements HttpClientMethods {
             return this;
         }
 
-        public Builder restTemplate(RetryPolicyProvider retryTemplate) {
+        public Builder retryTemplate(RetryPolicyProvider retryTemplate) {
             this.retryTemplate = retryTemplate;
             return this;
         }
