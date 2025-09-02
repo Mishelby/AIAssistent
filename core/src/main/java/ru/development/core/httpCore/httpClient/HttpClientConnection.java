@@ -3,33 +3,35 @@ package ru.development.core.httpCore.httpClient;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.retry.support.RetryTemplate;
+import ru.development.core.httpCore.retryPolice.RetryPolicyProvider;
 
 
 @Slf4j
 @Value
+@Accessors(fluent = true)
 public class HttpClientConnection implements HttpClientMethods {
     IHttpCore iHttpCore;
-    RetryTemplate retryTemplate;
+    RetryPolicyProvider retryPolicyProvider;
 
     public HttpClientConnection(Builder builder) {
         this.iHttpCore = builder.iHttpCore;
-        this.retryTemplate = builder.retryTemplate;
+        this.retryPolicyProvider = builder.retryTemplate;
     }
 
     @Getter
     @Setter
     public static class Builder {
         private IHttpCore iHttpCore;
-        private RetryTemplate retryTemplate;
+        private RetryPolicyProvider retryTemplate;
 
         public Builder iHttpCore(IHttpCore iHttpCore) {
             this.iHttpCore = iHttpCore;
             return this;
         }
 
-        public Builder restTemplate(RetryTemplate retryTemplate) {
+        public Builder restTemplate(RetryPolicyProvider retryTemplate) {
             this.retryTemplate = retryTemplate;
             return this;
         }

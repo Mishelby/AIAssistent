@@ -72,7 +72,7 @@ public class CheckTokenService {
 
     private ResponseEntity<AccessToken> getAccessTokenResponseEntity(MultiValueMap<String, String> formData) {
         return retryableExecute(context ->
-                        connection.getHttpConnection().getIHttpCore().post(
+                        connection.httpConnection().iHttpCore().post(
                                 "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
                                 getHeaders(),
                                 formDataToString(formData),
@@ -84,7 +84,7 @@ public class CheckTokenService {
     @SneakyThrows
     public <T> ResponseEntity<T> retryableExecute(RetryCallback<ResponseEntity<T>, Throwable> retryCallback,
                                                   String methodName) {
-        RetryTemplate retryTemplate = connection.getHttpConnection().getRetryTemplate();
+        RetryTemplate retryTemplate = connection.httpConnection().retryPolicyProvider().getRetryTemplate();
         return retryTemplate.execute(context -> {
             context.setAttribute("methodName", methodName);
             log.info("[RETRYABLE INFO] Попытка вызвать метод: {}", methodName);
