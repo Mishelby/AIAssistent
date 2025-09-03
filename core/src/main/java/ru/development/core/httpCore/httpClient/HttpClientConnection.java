@@ -20,6 +20,17 @@ public class HttpClientConnection implements HttpClientMethods {
         this.retryPolicyProvider = builder.retryTemplate;
     }
 
+    public HttpClientConnection(IHttpCore iHttpCore, RetryPolicyProvider retryPolicyProvider) {
+        this.iHttpCore = iHttpCore;
+        this.retryPolicyProvider = retryPolicyProvider;
+    }
+
+    public HttpClientConnection(IHttpCore iHttpCore) {
+        this.iHttpCore = iHttpCore;
+        this.retryPolicyProvider = null;
+    }
+
+
     @Getter
     @Setter
     public static class Builder {
