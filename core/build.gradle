@@ -2,9 +2,14 @@ dependencies {
     implementation 'chat.giga:langchain4j-gigachat:0.1.11'
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.5'
     implementation 'org.springframework:spring-webflux'
+    implementation 'org.springframework.retry:spring-retry:2.0.10'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+test {
+    jvmArgs "-javaagent:${classpath.find { it.name.contains("mockito-core") }.absolutePath}"
 }

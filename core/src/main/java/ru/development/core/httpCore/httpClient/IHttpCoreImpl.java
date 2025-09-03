@@ -29,11 +29,9 @@ import static java.util.Objects.nonNull;
 public final class IHttpCoreImpl implements IHttpCore {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
-    private final ExecutorService coreExecutorService;
 
-    public IHttpCoreImpl(ObjectMapper objectMapper, ExecutorService executorService) {
+    public IHttpCoreImpl(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.coreExecutorService = executorService;
 
         // Временно оставил здесь, перенесу в конфиг и сделаю бином
         CookieManager cookieManager = new CookieManager();
