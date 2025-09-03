@@ -12,11 +12,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.util.function.ObjLongConsumer;
+
 
 @Slf4j
 @Component
 public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
-
     private final TelegramClient telegramClient;
     private final TelegramBotJavaService telegramBotJavaService;
     private final TelegramBotMainMenuService telegramBotMainMenuService;
@@ -29,7 +30,6 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         this.telegramBotMainMenuService = telegramBotMainMenuService;
     }
 
-    @SneakyThrows
     @Override
     public void consume(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
@@ -46,31 +46,34 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    @SneakyThrows
     private void defaultMessage(Long chatId, String message) {
-        SendMessage sendMessage = SendMessage.builder()
+        SendMessage defaultMessage = SendMessage.builder()
                 .text(message)
                 .chatId(chatId)
                 .build();
 
-        telegramClient.execute(sendMessage);
+        ExecuteService.doExecute(telegramClient::execute, defaultMessage);
+
+        ObjLongConsumer<String> loggerInfo = (str, chat) ->
+                log.info("[TELEGRAM INFO] Сообщение: {}, было отправлено в чат: {}", str, chat);
+
+        loggerInfo.accept(message, chatId);
     }
 
-    @SneakyThrows
     private void special(Long chatId, User user) {
-        SendMessage sendMessage = SendMessage.builder()
-                .text(user.getFirstName() + " вы можете задать интересующий вопрос нашему специалисту!")
+        SendMessage message = SendMessage.builder()
+                .text(user.getFirstName() + " Ты можешь задать вопрос специалисту!\n" +
+                        " Чем подробнее ты опишешь свой запрос, тем точнее получишь ответ!")
                 .chatId(chatId)
                 .build();
 
-        telegramClient.execute(sendMessage);
+        ExecuteService.doExecute(telegramClient::execute, message);
     }
 
     private void sqlMessage(Long chatId, User user) {
 
     }
 
-    @SneakyThrows
     private void javaMessage(Long chatId, User user) {
         telegramBotJavaService.sendJavaLibrary(telegramClient, chatId, user);
     }
@@ -88,5 +91,6 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
             default -> defaultMessage(chatId, "Неизвестная команда!");
         }
     }
+
 
 }

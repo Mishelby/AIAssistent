@@ -18,18 +18,18 @@ public class TelegramBotJavaService {
 
     @SneakyThrows
     protected void sendJavaLibrary(TelegramClient telegramClient, Long chatId, User user){
-        SendMessage message = SendMessage.builder()
+        var message = SendMessage.builder()
                 .text(user.getFirstName() + " Выберете тему, которую хотели бы изучить")
                 .chatId(chatId)
                 .build();
 
 
-        InlineKeyboardButton javaCore = InlineKeyboardButton.builder()
+        var javaCore = InlineKeyboardButton.builder()
                 .text("Java core")
                 .callbackData("java core")
                 .build();
 
-        InlineKeyboardButton spring = InlineKeyboardButton.builder()
+        var spring = InlineKeyboardButton.builder()
                 .text("Spring framework")
                 .callbackData("spring framework")
                 .build();
@@ -39,12 +39,11 @@ public class TelegramBotJavaService {
                 new InlineKeyboardRow(spring)
         );
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
+        var inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                 .keyboard(buttons)
                 .build();
 
         message.setReplyMarkup(inlineKeyboardMarkup);
-
-        telegramClient.execute(message);
+        ExecuteService.doExecute(telegramClient::execute, message);
     }
 }

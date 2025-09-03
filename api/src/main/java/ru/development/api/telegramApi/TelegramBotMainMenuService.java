@@ -14,9 +14,8 @@ import java.util.List;
 @Service
 public class TelegramBotMainMenuService {
 
-    @SneakyThrows
     protected void sendMainMenu(TelegramClient telegramClient, Long chatId) {
-        SendMessage message = SendMessage.builder()
+        var message = SendMessage.builder()
                 .text("Привет! Выбери тему")
                 .chatId(chatId)
                 .build();
@@ -42,12 +41,11 @@ public class TelegramBotMainMenuService {
                 new InlineKeyboardRow(specialButton)
         );
 
-        InlineKeyboardMarkup inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
+        var inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
                 .keyboard(buttons)
                 .build();
 
         message.setReplyMarkup(inlineKeyboardMarkup);
-
-        telegramClient.execute(message);
+        ExecuteService.doExecute(telegramClient::execute, message);
     }
 }
