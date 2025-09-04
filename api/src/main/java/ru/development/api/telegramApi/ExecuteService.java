@@ -11,6 +11,7 @@ public class ExecuteService {
         try {
             telegramExecutor.accept(message);
         } catch (TelegramApiException e) {
+            log.error("[ERROR] Telegram Api Exception! {}, {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }

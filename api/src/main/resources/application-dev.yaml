@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/mydb
-    username: dev_user
-    password: dev_password
+    url: jdbc:postgresql://${DEV_PORT}/${DEV_DB_NAME}
+    username: ${DEV_LOGIN}
+    password: ${DEV_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -45,3 +45,6 @@ management:
   endpoint:
     health:
       show-details: always
+
+telegram:
+  api-key: ${TELEGRAM_API_KEY}

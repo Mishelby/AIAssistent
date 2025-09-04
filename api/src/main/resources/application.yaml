@@ -8,4 +8,4 @@ server:
   port: 8082
 
 telegram:
-  api-key: 8346229083:AAFP0kHuLlodcGTVyW4S-BGOF3ueCOc98XI
+  api-key: ${TELEGRAM_API_KEY}
