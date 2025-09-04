@@ -5,15 +5,17 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "students")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter(AccessLevel.PRIVATE)
 public class UserEntity {
+    // TODO вынести в утилитный класс
     private static final String FIRST_NAME = "first_name";
     private static final String LAST_NAME = "last_name";
     private static final String USER_NAME = "user_name";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
