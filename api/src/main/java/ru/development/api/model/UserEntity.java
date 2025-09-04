@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users", schema = "students")
 @AllArgsConstructor
@@ -29,4 +31,11 @@ public class UserEntity {
 
     @JsonProperty(USER_NAME)
     private String userName;
+
+    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<GradeEntity> grade;
+
+    @OneToOne
+    @JoinColumn(name = "chat_id", referencedColumnName = "id")
+    private ChatEntity chat;
 }

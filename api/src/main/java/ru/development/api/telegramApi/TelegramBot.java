@@ -3,14 +3,15 @@ package ru.development.api.telegramApi;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;
 import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot;
+import ru.development.api.telegramApi.telegramConsumer.MainMenuConsumer;
 
 @Component
 public class TelegramBot implements SpringLongPollingBot {
-    private final UpdateConsumer updateConsumer;
+    private final MainMenuConsumer mainMenuConsumer;
     private final ApiKeyPrefix apiKeyPrefix;
 
-    public TelegramBot(UpdateConsumer updateConsumer, ApiKeyPrefix apiKeyPrefix) {
-        this.updateConsumer = updateConsumer;
+    public TelegramBot(MainMenuConsumer mainMenuConsumer, ApiKeyPrefix apiKeyPrefix) {
+        this.mainMenuConsumer = mainMenuConsumer;
         this.apiKeyPrefix = apiKeyPrefix;
     }
 
@@ -21,6 +22,6 @@ public class TelegramBot implements SpringLongPollingBot {
 
     @Override
     public LongPollingUpdateConsumer getUpdatesConsumer() {
-        return updateConsumer;
+        return mainMenuConsumer;
     }
 }

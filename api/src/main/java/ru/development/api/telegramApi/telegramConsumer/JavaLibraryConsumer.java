@@ -1,51 +1,53 @@
-package ru.development.api.telegramApi;
+package ru.development.api.telegramApi.telegramConsumer;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+import ru.development.api.telegramApi.ExecuteService;
 
 import java.util.List;
 
 import static ru.development.api.telegramApi.TelegramBotJavaService.executeMessage;
 
 @Slf4j
-@Service
-public class TelegramBotMainMenuService {
+@UtilityClass
+public final class JavaLibraryConsumer {
     private static final String USER_NAME_MESSAGE = " %s %s";
 
-    public void sendMainMenu(TelegramClient telegramClient, Long chatId, User user) {
+    public static void chooseJavaLanguageLevel(TelegramClient telegramClient, Long chatId, User user) {
         SendMessage message = executeMessage(() ->
                 SendMessage.builder()
                         .text(USER_NAME_MESSAGE.formatted(user.getFirstName(),
-                                " Выбери интересующий раздел!"))
+                                " Выбери свой текущий уровень"))
                         .chatId(chatId)
                         .build()
         );
 
-        var javaButton = InlineKeyboardButton.builder()
-                .text("Библиотека java")
-                .callbackData("java")
+        var beginner = InlineKeyboardButton.builder()
+                .text("Начинающий")
+                .callbackData("beginner")
                 .build();
 
-        var sqlButton = InlineKeyboardButton.builder()
-                .text("Библиотека SQL")
-                .callbackData("sql")
+        var middle = InlineKeyboardButton.builder()
+                .text("Средний")
+                .callbackData("middle")
                 .build();
 
-        var specialButton = InlineKeyboardButton.builder()
-                .text("Задать вопрос специалисту")
-                .callbackData("special")
+        var senior = InlineKeyboardButton.builder()
+                .text("Продвинутый")
+                .callbackData("senior")
                 .build();
 
         List<InlineKeyboardRow> buttons = List.of(
-                new InlineKeyboardRow(javaButton),
-                new InlineKeyboardRow(sqlButton),
-                new InlineKeyboardRow(specialButton)
+                new InlineKeyboardRow(beginner),
+                new InlineKeyboardRow(middle),
+                new InlineKeyboardRow(senior)
         );
 
         var inlineKeyboardMarkup = InlineKeyboardMarkup.builder()

@@ -1,5 +1,6 @@
 package ru.development.api.telegramApi;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -14,4 +15,9 @@ import org.springframework.stereotype.Component;
 @Setter
 public class ApiKeyPrefix {
     private @NonNull String apiKey;
+
+    @PostConstruct
+    public void init(){
+        log.debug("[DEBUG] API Key Prefix Initialized: {}", apiKey);
+    }
 }
