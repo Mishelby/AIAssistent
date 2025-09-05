@@ -15,9 +15,11 @@ import ru.development.api.telegramApi.TelegramBotMainMenuService;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.ObjLongConsumer;
 
+import static java.util.Objects.nonNull;
 import static ru.development.api.telegramApi.TelegramBotJavaService.sendJavaLibrary;
 import static ru.development.api.telegramApi.service.ExecuteService.*;
-import static ru.development.api.telegramApi.telegramConsumer.JavaLibraryService.chooseJavaLanguageLevel;
+import static ru.development.api.telegramApi.service.JavaLibraryService.chooseJavaLanguageLevel;
+import static ru.development.api.telegramApi.service.JavaLibraryService.sendHelpFile;
 
 
 @Slf4j
@@ -50,28 +52,46 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
-        Long chatId = update.getMessage().getChatId();
-        var userFrom = update.getMessage().getFrom();
-        String userName = userFrom.getUserName();
-
-        if (!userRepository.existsByUsername(userName)) {
-            sendMessage(chatId, WELCOME_MESSAGE);
-            createNewUser(userName, userFrom, chatId);
-        }
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             String text = update.getMessage().getText();
-            chatId = update.getMessage().getChatId();
+            Long chatId = update.getMessage().getChatId();
+            var userFrom = update.getMessage().getFrom();
+            if (!userRepository.existsByUsername(userFrom.getUserName())) {
+                sendMessage(chatId, WELCOME_MESSAGE);
+                createNewUser(userFrom.getUserName(), userFrom, chatId);
+            }
             var user = update.getMessage().getFrom();
             if ("/start".equals(text)) {
                 telegramBotMainMenuService.sendMainMenu(telegramClient, chatId, user);
-            } else {
-                sendMessage(chatId, DEFAULT_MESSAGE);
             }
         }
 
         if (update.hasCallbackQuery()) {
-            chatId = update.getCallbackQuery().getMessage().getChatId();
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
+            var callbackQuery = update.getCallbackQuery();
+            var user = callbackQuery.getFrom();
+            String callbackQueryData = callbackQuery.getData();
+
+            switch (callbackQueryData) {
+                case "know_level" -> {
+                    telegramBotMainMenuService.chooseYourProgrammingLevel(telegramClient, chatId, user);
+                    return;
+                }
+                case "help" -> {
+                    sendHelpFile(telegramClient, chatId);
+                    return;
+                }
+                default -> {
+                    sendMessage(chatId, DEFAULT_MESSAGE);
+                    return;
+                }
+            }
+
+        }
+
+        if (update.hasCallbackQuery()) {
+            Long chatId = update.getCallbackQuery().getMessage().getChatId();
             var callbackQuery = update.getCallbackQuery();
             var user = callbackQuery.getFrom();
             String callbackQueryData = callbackQuery.getData();
@@ -84,19 +104,6 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
             }
         }
 
-        if (update.hasCallbackQuery()) {
-            chatId = update.getCallbackQuery().getMessage().getChatId();
-            var callbackQuery = update.getCallbackQuery();
-            var user = callbackQuery.getFrom();
-            String callbackQueryData = callbackQuery.getData();
-
-            switch (callbackQueryData) {
-                case "know_level" ->
-                        telegramBotMainMenuService.chooseYourProgrammingLevel(telegramClient, chatId, user);
-                case "help" -> sendMessage(chatId, DEFAULT_MESSAGE);
-                default -> sendMessage(chatId, DEFAULT_MESSAGE);
-            }
-        }
     }
 
     private void createNewUser(String userName, User userFrom, Long chatId) {

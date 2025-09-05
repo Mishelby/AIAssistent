@@ -31,7 +31,7 @@ public class TelegramBotMainMenuService {
     public void sendMainMenu(TelegramClient telegramClient, Long chatId, User user) {
         SendMessage message = executeMessage(() ->
                 SendMessage.builder()
-                        .text(USER_NAME_MESSAGE.formatted(user.getFirstName(), CHOOSE_YOUR_LEVEL_MESSAGE))
+                        .text(CHOOSE_YOUR_LEVEL_MESSAGE)
                         .chatId(chatId)
                         .build()
         );
