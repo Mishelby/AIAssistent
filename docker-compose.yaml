@@ -1,6 +1,101 @@
-version: '3.8'
 
 services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:app
+    command: gradle bootRun --args='--spring.profiles.active=dev'
+    container_name: telegram_api
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres_dev_telegram:
+        condition: service_healthy
+      zookeeper:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://api_postgres:5432/${DEV_DB_NAME}
+        SPRING_DATASOURCE_USERNAME: ${DEV_LOGIN}
+        SPRING_DATASOURCE_PASSWORD: ${DEV_PASSWORD}
+        SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://${DEV_HOST}:${DEV_PORT}/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  giga_chat:
+    image: giga_chat_image
+    container_name: giga_chat_container
+    build:
+      context: ./main
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres_giga_chat:
+        condition: service_healthy
+      zookeeper:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://giga_postgres:5432/${DEV_GIGA_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DEV_GIGA_LOGIN}
+      SPRING_DATASOURCE_PASSWORD: ${DEV_GIGA_PASSWORD}
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://${DEV_GIGA_HOST}:${DEV_GIGA_PORT}/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  postgres_dev_telegram:
+    image: postgres:17-alpine
+    container_name: api_postgres
+    environment:
+      POSTGRES_USER: ${DEV_LOGIN}
+      POSTGRES_PASSWORD: ${DEV_PASSWORD}
+      POSTGRES_DB: ${DEV_DB_NAME}
+    ports:
+      - "${DEV_PORT}:5432"
+    volumes:
+      - telegram_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DEV_LOGIN} -d ${DEV_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres_giga_chat:
+    image: postgres:17-alpine
+    container_name: giga_postgres
+    environment:
+      POSTGRES_USER: ${DEV_GIGA_LOGIN}
+      POSTGRES_PASSWORD: ${DEV_GIGA_PASSWORD}
+      POSTGRES_DB: ${DEV_GIGA_DB_NAME}
+    ports:
+      - "${DEV_GIGA_PORT}:5432"
+    volumes:
+      - giga_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DEV_GIGA_LOGIN} -d ${DEV_GIGA_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -10,7 +105,7 @@ services:
     ports:
       - "2181:2181"
     healthcheck:
-      test: ["CMD", "echo", "ruok", "|", "nc", "-w", "5", "localhost", "2181"]
+      test: [ "CMD", "echo", "ruok", "|", "nc", "-w", "5", "localhost", "2181" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,13 +123,15 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-
+volumes:
+  giga_pgdata:
+  telegram_pgdata:

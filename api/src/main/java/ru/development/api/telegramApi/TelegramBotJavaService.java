@@ -10,7 +10,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.util.List;
-import java.util.function.Supplier;
+
+import static ru.development.api.telegramApi.service.ExecuteService.doExecute;
+import static ru.development.api.telegramApi.service.ExecuteService.executeMessage;
 
 @Slf4j
 @UtilityClass
@@ -21,7 +23,7 @@ public class TelegramBotJavaService {
         SendMessage message = executeMessage(() ->
                 SendMessage.builder()
                         .text(USER_NAME_MESSAGE.formatted(user.getFirstName(),
-                                " Выберете тему, которую хотели бы изучить"))
+                                " Выберете раздел, которую хотели бы изучить"))
                         .chatId(chatId)
                         .build()
         );
@@ -46,19 +48,7 @@ public class TelegramBotJavaService {
                 .build();
 
         message.setReplyMarkup(inlineKeyboardMarkup);
-        ExecuteService.doExecute(telegramClient::execute, message);
-    }
-
-    public static SendMessage executeMessage(Supplier<SendMessage> supplier) {
-        try{
-            var sendMessage = supplier.get();
-            log.info("[TELEGRAM INFO] Создано сообщение для чата: {}, {}",
-                    sendMessage.getChatId(), sendMessage.getText());
-            return sendMessage;
-        }catch (Exception e){
-            log.error("[TELEGRAM ERROR] Ошибка отправки java library! {}", e.getMessage());
-            throw new RuntimeException("Ошибка отправки java library!");
-        }
+        doExecute(telegramClient::execute, message);
     }
 
 }

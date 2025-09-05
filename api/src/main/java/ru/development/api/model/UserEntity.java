@@ -10,8 +10,9 @@ import java.util.List;
 @Table(name = "users", schema = "students")
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Getter
-@Setter(AccessLevel.PRIVATE)
+@Setter
 public class UserEntity {
     // TODO вынести в утилитный класс
     private static final String FIRST_NAME = "first_name";
@@ -32,10 +33,13 @@ public class UserEntity {
     @JsonProperty(USER_NAME)
     private String userName;
 
-    @OneToMany(mappedBy = "user",fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<GradeEntity> grade;
 
-    @OneToOne
+    @OneToOne(cascade = {
+            CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.REFRESH},
+            fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(name = "chat_id", referencedColumnName = "id")
     private ChatEntity chat;
+
 }

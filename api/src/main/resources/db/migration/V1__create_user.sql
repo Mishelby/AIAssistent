@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS students.chat
 
 CREATE TABLE IF NOT EXISTS students.users
 (
-    id        BIGSERIAL PRIMARY KEY,
-    name      VARCHAR(30),
-    last_name VARCHAR(30),
-    user_name VARCHAR(30) NOT NULL,
-    chat_id   BIGINT UNIQUE REFERENCES students.chat (id)
+    id         BIGSERIAL PRIMARY KEY,
+    first_name VARCHAR(30),
+    last_name  VARCHAR(30),
+    user_name  VARCHAR(30) NOT NULL,
+    chat_id    BIGINT UNIQUE REFERENCES students.chat (id)
 );

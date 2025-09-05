@@ -5,15 +5,14 @@ cache:
   fixedRateValue: 3600000
 
 spring:
-  # Database + jpa config
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=PostgreSQL;
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://${DEV_GIGA_HOST}:${DEV_LOCAL_PORT}/${DEV_GIGA_DB_NAME}
+    username: ${DEV_GIGA_LOGIN}
+    password: ${DEV_GIGA_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   kafka:
-    bootstrap-servers: 127.0.0.1:9092
+    bootstrap-servers: ${DEV_GIGA_HOST}:9092
     groups:
       chat-info: gigachat-info-group
       request-data: gigachat-request-group

@@ -11,13 +11,17 @@ public class ProgrammingLanguageConverter implements AttributeConverter<Programm
 
     @Override
     public String convertToDatabaseColumn(ProgrammingLanguage attribute) {
-        if (nonNull(attribute)) return ProgrammingLanguage.fromEnumToString(attribute);
+        if (nonNull(attribute)) {
+            return ProgrammingLanguage.fromEnumToString(attribute);
+        }
         return null;
     }
 
     @Override
     public ProgrammingLanguage convertToEntityAttribute(String dbData) {
-        if (nonNull(dbData)) return ProgrammingLanguage.fromStringToEnum(dbData);
+        if (nonNull(dbData)) {
+            return ProgrammingLanguage.fromStringToEnum(dbData);
+        }
         return null;
     }
 }
