@@ -3,7 +3,6 @@ package ru.development.api.telegramApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
@@ -20,15 +19,15 @@ public class TelegramBotMainMenuService {
     private static final String USER_NAME_MESSAGE = " %s\n %s";
 
     private static final String CHOOSE_YOUR_LEVEL_MESSAGE = """
-            Для начала давай определимся какой у тебя уровень?.
-            Если ты не знаешь, как это сделать, жми кнопку и я пришлю тебе шпаргалку!
+            🚀 Для начала давай определим твой уровень знаний.
+            Не переживай, если сомневаешься — жми кнопку, и я пришлю удобную шпаргалку!
             """;
 
     private static final String CHOOSE_LEVEL_MESSAGE = """
-            Отлично! Просто выбери тот вариант, который как ты считаешь подходит тебе!
+            👍 Отлично! Теперь выбери тот уровень, который, как тебе кажется, больше всего подходит именно тебе.
             """;
 
-    public void sendMainMenu(TelegramClient telegramClient, Long chatId) {
+    public void determineProgrammingLanguage(TelegramClient telegramClient, Long chatId) {
         SendMessage message = executeMessage(() ->
                 SendMessage.builder()
                         .text(CHOOSE_YOUR_LEVEL_MESSAGE)

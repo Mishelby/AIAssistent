@@ -27,41 +27,6 @@ public final class JavaLibraryService {
     private static final String SEND_HELP_FILE
             = "Отлично! Держи файл который поможет тебе определить твой текущий уровень!";
 
-    public static void chooseJavaLanguageLevel(TelegramClient telegramClient, Long chatId, User user) {
-        SendMessage message = executeMessage(() -> sendMessage(
-                USER_NAME_MESSAGE.formatted(user.getFirstName(),
-                        " Выбери свой текущий уровень"), chatId)
-        );
-
-        var beginner = InlineKeyboardButton.builder()
-                .text("Начинающий")
-                .callbackData("beginner")
-                .build();
-
-        var middle = InlineKeyboardButton.builder()
-                .text("Средний")
-                .callbackData("middle")
-                .build();
-
-        var senior = InlineKeyboardButton.builder()
-                .text("Продвинутый")
-                .callbackData("senior")
-                .build();
-
-        List<InlineKeyboardRow> buttons = List.of(
-                new InlineKeyboardRow(beginner),
-                new InlineKeyboardRow(middle),
-                new InlineKeyboardRow(senior)
-        );
-
-        var inlineKeyboardMarkup = InlineKeyboardMarkup.builder()
-                .keyboard(buttons)
-                .build();
-
-        message.setReplyMarkup(inlineKeyboardMarkup);
-        doExecute(telegramClient::execute, message);
-    }
-
     public static void sendHelpFile(TelegramClient telegramClient, Long chatId) {
         var message = executeMessage(() -> sendMessage(SEND_HELP_FILE, chatId));
         var sendDocument = executeDocument(() -> getSendDocument(HELP_FILE_PATH, chatId));

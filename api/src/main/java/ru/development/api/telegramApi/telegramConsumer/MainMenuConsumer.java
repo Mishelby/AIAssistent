@@ -23,14 +23,11 @@ import ru.development.api.telegramApi.model.ChatInfoDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.ObjLongConsumer;
 
-import static java.util.Objects.nonNull;
-import static ru.development.api.telegramApi.TelegramBotJavaService.sendJavaLibrary;
 import static ru.development.api.telegramApi.service.ExecuteService.*;
-import static ru.development.api.telegramApi.service.JavaLibraryService.chooseJavaLanguageLevel;
 import static ru.development.api.telegramApi.service.JavaLibraryService.sendHelpFile;
+import static ru.development.api.telegramApi.service.TelegramApiService.mainMenuKeyboard;
 
 
 @Slf4j
@@ -38,19 +35,39 @@ import static ru.development.api.telegramApi.service.JavaLibraryService.sendHelp
 public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
     private final UserService userService;
     private final UserEntityRepository userRepository;
-    private static final String DEFAULT_MESSAGE = "Я вас не понимаю";
-    private static final String WELCOME_MESSAGE = """
-            Привет!
-            Этот бот предназначен для изучения материала по различным темам языка программирования Java!
-            В нём ты будешь получать весь необходимый теоретический материал а так же домашние задания.
-            Вся информация разделена по уровням, от начинающего до более продвинутого.
-            Доступ к более высоким уровням будет открываться после выполнения всех домашних работ твоего текущего
-            уровня.
-            Нажми старт что бы начать!
-            """;
-    private static final String WAITING_MESSAGE = "Отлично! Но для начала укажи свой уровень";
     private final TelegramClient telegramClient;
     private final TelegramBotMainMenuService telegramBotMainMenuService;
+
+    private static final String DEFAULT_MESSAGE = "Я вас не понимаю";
+    private static final String BEGINNER_MESSAGE = """
+            🎉 Поздравляю с началом твоего пути в изучении Java!
+            
+            Внизу ты увидишь меню с кнопками:
+            
+            📌 Чтобы ознакомиться с планом обучения, нажми «План обучения».
+            
+            📚 Выбери тему, и я пришлю тебе материалы для изучения.
+            
+            📝 Когда почувствуешь готовность — жми «Получить домашнее задание», и сможешь проверить свои силы.
+            
+            Ты не один — я буду сопровождать тебя на каждом шаге. Удачи, и вперёд к новым знаниям! 🚀
+            """;
+    private static final String WELCOME_MESSAGE = """
+            👋 Привет!
+            
+            Этот бот создан как твой личный наставник по изучению Java.
+            Здесь ты получишь:
+            
+            📘 структурированный теоретический материал,
+            
+            📝 домашние задания для закрепления,
+            
+            🎯 пошаговый рост от новичка до продвинутого уровня.
+            
+            Обучение разделено на уровни: чтобы открыть следующий, нужно завершить текущий и выполнить все задания.
+            
+            Нажми «Старт», и мы начнём твой путь к уверенным знаниям Java 🚀
+            """;
 
     public MainMenuConsumer(
             UserService userService, UserEntityRepository userRepository,
@@ -74,17 +91,18 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
             }
 
             if ("Старт!".equals(chatInfo.text())) {
-                telegramBotMainMenuService.sendMainMenu(telegramClient, chatInfo.chatId());
+                telegramBotMainMenuService.determineProgrammingLanguage(telegramClient, chatInfo.chatId());
             }
         }
 
-            if (update.hasCallbackQuery()) {
+        if (update.hasCallbackQuery()) {
             ChatInfoDto chatInfo = getCallBackInfo(update.getCallbackQuery());
 
             switch (chatInfo.callbackQuery().getData()) {
                 case "KNOW_LEVEL" -> telegramBotMainMenuService.chooseYourProgrammingLevel(
                         telegramClient, chatInfo.chatId()
                 );
+                case "BEGINNER" -> mainMenuKeyboard(telegramClient, chatInfo.chatId(), BEGINNER_MESSAGE);
 
                 case "HELP" -> sendHelpFile(telegramClient, chatInfo.chatId());
 
@@ -140,19 +158,6 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
         return welcomeMessage;
     }
 
-
-    private void doWork(Long chatId, User user) {
-        var sendMessage = executeMessage(() -> SendMessage.builder()
-                .text(WAITING_MESSAGE)
-                .chatId(chatId)
-                .build());
-
-        doExecute(telegramClient::execute, sendMessage);
-
-        CompletableFuture.runAsync(() ->
-                chooseJavaLanguageLevel(telegramClient, chatId, user)
-        );
-    }
 
     public void logInfo(ObjLongConsumer<String> consumer, String message, Long chatId) {
         consumer.accept(message, chatId);
