@@ -28,7 +28,7 @@ public class TelegramBotMainMenuService {
             Отлично! Просто выбери тот вариант, который как ты считаешь подходит тебе!
             """;
 
-    public void sendMainMenu(TelegramClient telegramClient, Long chatId, User user) {
+    public void sendMainMenu(TelegramClient telegramClient, Long chatId) {
         SendMessage message = executeMessage(() ->
                 SendMessage.builder()
                         .text(CHOOSE_YOUR_LEVEL_MESSAGE)
@@ -38,12 +38,12 @@ public class TelegramBotMainMenuService {
 
         var iKnowMyLevel = InlineKeyboardButton.builder()
                 .text("Я знаю свой текущий уровень!")
-                .callbackData("know_leve")
+                .callbackData("KNOW_LEVEL")
                 .build();
 
         var needHelp = InlineKeyboardButton.builder()
                 .text("Пришли шпаргалку!")
-                .callbackData("help")
+                .callbackData("HELP")
                 .build();
 
         List<InlineKeyboardRow> buttons = List.of(
@@ -59,20 +59,20 @@ public class TelegramBotMainMenuService {
         doExecute(telegramClient::execute, message);
     }
 
-    public void chooseYourProgrammingLevel(TelegramClient telegramClient, Long chatId, User user) {
+    public void chooseYourProgrammingLevel(TelegramClient telegramClient, Long chatId) {
         SendMessage message = executeMessage(() -> SendMessage.builder()
-                .text(USER_NAME_MESSAGE.formatted(user.getFirstName(), CHOOSE_LEVEL_MESSAGE))
+                .text(CHOOSE_LEVEL_MESSAGE)
                 .chatId(chatId)
                 .build());
 
         var beginner = InlineKeyboardButton.builder()
                 .text("Я начинающий программист")
-                .callbackData("know_leve")
+                .callbackData("BEGINNER")
                 .build();
 
         var middle = InlineKeyboardButton.builder()
                 .text("У меня средний уровень")
-                .callbackData("help")
+                .callbackData("MIDDLE")
                 .build();
 
         List<InlineKeyboardRow> buttons = List.of(

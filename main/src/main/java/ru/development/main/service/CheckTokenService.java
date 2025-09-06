@@ -84,7 +84,7 @@ public class CheckTokenService {
     @SneakyThrows
     public <T> ResponseEntity<T> retryableExecute(RetryCallback<ResponseEntity<T>, Throwable> retryCallback,
                                                   String methodName) {
-        RetryTemplate retryTemplate = defaultConnection.httpConnection().retryPolicyProvider().getRetryTemplate();
+        var retryTemplate = defaultConnection.httpConnection().retryPolicyProvider().getRetryTemplate();
         return retryTemplate.execute(context -> {
             context.setAttribute("methodName", methodName);
             log.info("[RETRYABLE INFO] Попытка вызвать метод: {}", methodName);

@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 @UtilityClass
 public class ExecuteService {
     private static final String HELP_DOCUMENT_NAME = "Help document";
+
     public static <T> void doExecute(TelegramExecutor<T> telegramExecutor, T message) {
         try {
             telegramExecutor.accept(message);
@@ -29,8 +30,9 @@ public class ExecuteService {
 
     public static SendMessage executeMessage(Supplier<SendMessage> supplier) {
         try {
+            log.info("[TELEGRAM INFO] Попытка создать и отправить сообщение");
             var sendMessage = supplier.get();
-            log.info("[TELEGRAM INFO] Создано сообщение для чата: {}, {}",
+            log.info("[TELEGRAM INFO] Сообщение создано и отправлено: {}, {}",
                     sendMessage.getChatId(), sendMessage.getText());
             return sendMessage;
         } catch (Exception e) {

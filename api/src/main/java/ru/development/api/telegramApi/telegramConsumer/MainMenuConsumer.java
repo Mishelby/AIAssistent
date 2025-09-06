@@ -1,17 +1,28 @@
 package ru.development.api.telegramApi.telegramConsumer;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.longpolling.BotSession;
+import org.telegram.telegrambots.longpolling.starter.AfterBotRegistration;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import ru.development.api.model.CreateUserRequest;
+import ru.development.api.model.UserDto;
 import ru.development.api.repository.UserEntityRepository;
 import ru.development.api.service.UserService;
 import ru.development.api.telegramApi.TelegramBotMainMenuService;
+import ru.development.api.telegramApi.model.ChatInfoDto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.ObjLongConsumer;
 
@@ -35,6 +46,7 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
             Вся информация разделена по уровням, от начинающего до более продвинутого.
             Доступ к более высоким уровням будет открываться после выполнения всех домашних работ твоего текущего
             уровня.
+            Нажми старт что бы начать!
             """;
     private static final String WAITING_MESSAGE = "Отлично! Но для начала укажи свой уровень";
     private final TelegramClient telegramClient;
@@ -52,70 +64,68 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
-
         if (update.hasMessage() && update.getMessage().hasText()) {
-            String text = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
-            var userFrom = update.getMessage().getFrom();
-            if (!userRepository.existsByUsername(userFrom.getUserName())) {
-                sendMessage(chatId, WELCOME_MESSAGE);
-                createNewUser(userFrom.getUserName(), userFrom, chatId);
-            }
-            var user = update.getMessage().getFrom();
-            if ("/start".equals(text)) {
-                telegramBotMainMenuService.sendMainMenu(telegramClient, chatId, user);
-            }
-        }
+            ChatInfoDto chatInfo = getChatInfo(update);
 
-        if (update.hasCallbackQuery()) {
-            Long chatId = update.getCallbackQuery().getMessage().getChatId();
-            var callbackQuery = update.getCallbackQuery();
-            var user = callbackQuery.getFrom();
-            String callbackQueryData = callbackQuery.getData();
-
-            switch (callbackQueryData) {
-                case "know_level" -> {
-                    telegramBotMainMenuService.chooseYourProgrammingLevel(telegramClient, chatId, user);
-                    return;
-                }
-                case "help" -> {
-                    sendHelpFile(telegramClient, chatId);
-                    return;
-                }
-                default -> {
-                    sendMessage(chatId, DEFAULT_MESSAGE);
-                    return;
-                }
+            if (!userRepository.existsByUsername(chatInfo.user().getUserName())
+                    && "/start".equalsIgnoreCase(chatInfo.text())) {
+                keyboardStart(chatInfo.chatId(), WELCOME_MESSAGE);
+                createNewUser(chatInfo.user(), chatInfo.chatId());
             }
 
-        }
-
-        if (update.hasCallbackQuery()) {
-            Long chatId = update.getCallbackQuery().getMessage().getChatId();
-            var callbackQuery = update.getCallbackQuery();
-            var user = callbackQuery.getFrom();
-            String callbackQueryData = callbackQuery.getData();
-
-            switch (callbackQueryData) {
-                case "java" -> doWork(chatId, user);
-                case "sql" -> sendMessage(chatId, DEFAULT_MESSAGE);
-                case "special" -> sendMessage(chatId, DEFAULT_MESSAGE);
-                default -> sendMessage(chatId, DEFAULT_MESSAGE);
+            if ("Старт!".equals(chatInfo.text())) {
+                telegramBotMainMenuService.sendMainMenu(telegramClient, chatInfo.chatId());
             }
         }
 
+            if (update.hasCallbackQuery()) {
+            ChatInfoDto chatInfo = getCallBackInfo(update.getCallbackQuery());
+
+            switch (chatInfo.callbackQuery().getData()) {
+                case "KNOW_LEVEL" -> telegramBotMainMenuService.chooseYourProgrammingLevel(
+                        telegramClient, chatInfo.chatId()
+                );
+
+                case "HELP" -> sendHelpFile(telegramClient, chatInfo.chatId());
+
+                default -> sendMessage(chatInfo.chatId(), DEFAULT_MESSAGE);
+
+            }
+
+        }
     }
 
-    private void createNewUser(String userName, User userFrom, Long chatId) {
-        userService.createUser(CreateUserRequest.builder()
-                .userName(userName)
-                .firstName(userFrom.getFirstName())
-                .lastName(userFrom.getLastName())
-                .chatNumber(chatId.toString())
-                .build());
+    private static @NotNull ChatInfoDto getCallBackInfo(CallbackQuery callbackQuery) {
+        Long chatId = callbackQuery.getMessage().getChatId();
+        var userFrom = callbackQuery.getFrom();
+
+        return ChatInfoDto.builder()
+                .chatId(chatId)
+                .user(userFrom)
+                .callbackQuery(callbackQuery)
+                .build();
     }
 
-    private void sendMessage(Long chatId, String message) {
+    private static @NotNull ChatInfoDto getChatInfo(Update update) {
+        String text = update.getMessage().getText();
+        Long chatId = update.getMessage().getChatId();
+        var userFrom = update.getMessage().getFrom();
+
+        return ChatInfoDto.builder()
+                .chatId(chatId)
+                .text(text)
+                .user(userFrom)
+                .build();
+    }
+
+    private void createNewUser(User userFrom, Long chatId) {
+        saveNewUser((newUserName, userChatId) ->
+                        log.info("[TELEGRAM INFO] Новый пользователь добавлен в базу данных: {}, {}",
+                                newUserName, userChatId),
+                chatId, userFrom);
+    }
+
+    private SendMessage sendMessage(Long chatId, String message) {
         SendMessage welcomeMessage = executeMessage(
                 () -> SendMessage.builder()
                         .text(message)
@@ -123,9 +133,11 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
                         .build());
 
         doExecute(telegramClient::execute, welcomeMessage);
-        logInfo((String str, long chat) -> {
-            log.info("[TELEGRAM INFO] Сообщение: {}, было отправлено в чат: {}", str, chat);
-        }, DEFAULT_MESSAGE, chatId);
+        logInfo((newMessage, userChatId) ->
+                        log.info("[TELEGRAM INFO] Сообщение: {}, было отправлено в чат: {}", newMessage, userChatId),
+                DEFAULT_MESSAGE, chatId);
+
+        return welcomeMessage;
     }
 
 
@@ -142,27 +154,53 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
         );
     }
 
-    public void logInfo(ObjLongConsumer<String> loggerInfo, String message, long chatId) {
-        loggerInfo.accept(message, chatId);
+    public void logInfo(ObjLongConsumer<String> consumer, String message, Long chatId) {
+        consumer.accept(message, chatId);
     }
 
-    private void special(Long chatId, User user) {
-        SendMessage message = SendMessage.builder()
-                .text(user.getFirstName() + " Ты можешь задать вопрос специалисту!\n" +
-                        " Чем подробнее ты опишешь свой запрос, тем точнее получишь ответ!")
-                .chatId(chatId)
+    public void saveNewUser(
+            ObjLongConsumer<String> loggerInfo,
+            Long chatId,
+            User userFrom
+    ) {
+        UserDto user = userService.createUser(
+                CreateUserRequest.builder()
+                        .userName(userFrom.getUserName())
+                        .firstName(userFrom.getFirstName())
+                        .lastName(userFrom.getLastName())
+                        .chatNumber(chatId.toString())
+                        .build());
+
+        loggerInfo.accept(user.getUserName(), chatId);
+    }
+
+    public void keyboardStart(Long chatId, String message) {
+        var startButton = new KeyboardButton("Старт!");
+        var keyboardButtons = new KeyboardRow(startButton);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        keyboardRows.add(keyboardButtons);
+
+        ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
+                .keyboard(keyboardRows)
+                .resizeKeyboard(true)
+                .oneTimeKeyboard(true)
                 .build();
 
-        doExecute(telegramClient::execute, message);
+        var sendMessage = executeMessage(() -> SendMessage.builder()
+                .text(message)
+                .chatId(chatId)
+                .replyMarkup(keyboardMarkup)
+                .build());
+
+        doExecute(telegramClient::execute, sendMessage);
     }
 
-    private void sqlMessage(Long chatId, User user) {
+
+    @AfterBotRegistration
+    public void afterBotRegistration(BotSession botSession) {
+        log.info("[TELEGRAM INFO] Registered bot running state is : {}", botSession);
 
     }
-
-    private void javaMessage(Long chatId, User user) {
-        sendJavaLibrary(telegramClient, chatId, user);
-    }
-
 
 }
