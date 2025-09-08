@@ -50,7 +50,7 @@ public class MilvusVectorService {
                 createFieldSchema("embedding_id", "Primary key", DataType.Int64, true, null),
                 createFieldSchema("model", "Embedding model", DataType.VarChar, false, null),
                 createFieldSchema("category", "Tag/Category", DataType.VarChar, false, null),
-                createFieldSchema("embedding_vector", "Vector", DataType.FloatVector, false, 5)
+                createFieldSchema("embedding_vector", "Vector", DataType.FloatVector, false, 2)
         );
     }
 
