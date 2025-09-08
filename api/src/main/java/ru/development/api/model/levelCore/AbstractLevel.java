@@ -12,8 +12,8 @@ import java.util.Queue;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
-public abstract sealed class BasicAbstractLevelType<T extends TaskType> implements ProgrammingLevelType
-        permits JavaBeginnerLevelType, JavaMiddleLevelType {
+public abstract sealed class AbstractLevel<T extends TaskType> implements ProgrammingLevelType
+        permits JavaBeginnerLevel, JavaMiddleLevel {
     Queue<T> tasks;
     String description;
 }

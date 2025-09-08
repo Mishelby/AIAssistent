@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
-public sealed class BasicAbstractTaskType implements TaskType
-        permits JavaBeginnerTaskType, JavaMiddleTaskType {
+public sealed class AbstractType implements TaskType
+        permits JavaBeginnerType, JavaMiddleType {
 
     String languageName;
     int difficultLevel;

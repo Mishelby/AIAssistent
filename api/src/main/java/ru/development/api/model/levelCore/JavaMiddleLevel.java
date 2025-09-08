@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public final class JavaBeginnerTaskType extends BasicAbstractTaskType {
+public final class JavaMiddleLevel extends AbstractLevel<JavaMiddleType> {
 
 }
