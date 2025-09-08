@@ -21,9 +21,7 @@ public class ProgrammingLanguageEntity {
     private Long id;
 
     @Convert(converter = ProgrammingLanguageConverter.class)
-    @Column(name = "code")
-    private ProgrammingLanguage language;
+    @Column(name = "name")
+    private ProgrammingLanguage name;
 
-    @Column(name = "number")
-    private Integer levelNumber;
 }

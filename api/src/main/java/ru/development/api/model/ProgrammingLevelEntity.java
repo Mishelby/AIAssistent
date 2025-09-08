@@ -21,5 +21,9 @@ public class ProgrammingLevelEntity {
     private Long id;
 
     @Convert(converter = ProgrammingLevelConverter.class)
-    private ProgrammingLevel level;
+    @Column(name = "code")
+    private ProgrammingLevel code;
+
+    @Column(name = "number")
+    private Integer levelNumber;
 }

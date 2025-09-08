@@ -3,6 +3,7 @@ package ru.development.api.telegramApi.telegramConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.longpolling.BotSession;
 import org.telegram.telegrambots.longpolling.starter.AfterBotRegistration;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
@@ -14,8 +15,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
-import ru.development.api.model.CreateUserRequest;
-import ru.development.api.model.UserDto;
+import ru.development.api.model.*;
+import ru.development.api.repository.GradeEntityRepository;
+import ru.development.api.repository.ProgrammingLanguageRepository;
+import ru.development.api.repository.ProgrammingLevelRepository;
 import ru.development.api.repository.UserEntityRepository;
 import ru.development.api.service.UserService;
 import ru.development.api.telegramApi.TelegramBotMainMenuService;
@@ -23,6 +26,7 @@ import ru.development.api.telegramApi.model.ChatInfoDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.ObjLongConsumer;
 
 import static ru.development.api.telegramApi.service.ExecuteService.*;
@@ -37,6 +41,8 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
     private final UserEntityRepository userRepository;
     private final TelegramClient telegramClient;
     private final TelegramBotMainMenuService telegramBotMainMenuService;
+    private final ProgrammingLanguageRepository languageRepository;
+    private final ProgrammingLevelRepository programmingLevelRepository;
 
     private static final String DEFAULT_MESSAGE = "Я вас не понимаю";
     private static final String BEGINNER_MESSAGE = """
@@ -68,15 +74,20 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
             
             Нажми «Старт», и мы начнём твой путь к уверенным знаниям Java 🚀
             """;
+    private final GradeEntityRepository gradeEntityRepository;
 
     public MainMenuConsumer(
             UserService userService, UserEntityRepository userRepository,
             TelegramClient telegramClient,
-            TelegramBotMainMenuService telegramBotMainMenuService) {
+            TelegramBotMainMenuService telegramBotMainMenuService,
+            ProgrammingLanguageRepository languageRepository, ProgrammingLevelRepository programmingLevelRepository, GradeEntityRepository gradeEntityRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.telegramClient = telegramClient;
         this.telegramBotMainMenuService = telegramBotMainMenuService;
+        this.languageRepository = languageRepository;
+        this.programmingLevelRepository = programmingLevelRepository;
+        this.gradeEntityRepository = gradeEntityRepository;
     }
 
     @Override
@@ -97,12 +108,22 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
 
         if (update.hasCallbackQuery()) {
             ChatInfoDto chatInfo = getCallBackInfo(update.getCallbackQuery());
+            User user = chatInfo.user();
 
             switch (chatInfo.callbackQuery().getData()) {
                 case "KNOW_LEVEL" -> telegramBotMainMenuService.chooseYourProgrammingLevel(
                         telegramClient, chatInfo.chatId()
                 );
-                case "BEGINNER" -> mainMenuKeyboard(telegramClient, chatInfo.chatId(), BEGINNER_MESSAGE);
+                case "BEGINNER" -> {
+                    mainMenuKeyboard(telegramClient, chatInfo.chatId(), BEGINNER_MESSAGE);
+                    // обновляем данные в БД
+                    userService.buildAndSafeInfoAboutUser(user, "Java", "BEGINNER");
+                }
+                case "MIDDLE" -> {
+                    mainMenuKeyboard(telegramClient, chatInfo.chatId(), BEGINNER_MESSAGE);
+                    // обновляем данные в БД
+                    userService.buildAndSafeInfoAboutUser(user, "Java", "MIDDLE");
+                }
 
                 case "HELP" -> sendHelpFile(telegramClient, chatInfo.chatId());
 
@@ -112,6 +133,7 @@ public class MainMenuConsumer implements LongPollingSingleThreadUpdateConsumer {
 
         }
     }
+
 
     private static @NotNull ChatInfoDto getCallBackInfo(CallbackQuery callbackQuery) {
         Long chatId = callbackQuery.getMessage().getChatId();

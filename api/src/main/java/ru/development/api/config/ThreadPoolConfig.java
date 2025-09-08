@@ -16,7 +16,7 @@ import static java.util.Objects.nonNull;
 
 @Getter
 @Setter
-public class ThreadPoolConfig {
+public final class ThreadPoolConfig {
     private final int corePoolSize;
     private final int maximumPoolSize;
     private final long keepAliveTime;

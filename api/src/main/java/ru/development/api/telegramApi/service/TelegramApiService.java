@@ -27,10 +27,12 @@ public final class TelegramApiService {
     public static void mainMenuKeyboard(TelegramClient telegramClient, Long chatId, String message) {
         List<KeyboardRow> keyboardRows1 = getKeyboardRows1();
         List<KeyboardRow> keyboardRows2 = getKeyboardRows2();
+        List<KeyboardRow> keyboardRows3 = getKeyboardRows3();
 
         ReplyKeyboardMarkup keyboardMarkup = ReplyKeyboardMarkup.builder()
                 .keyboard(keyboardRows1)
                 .keyboard(keyboardRows2)
+                .keyboard(keyboardRows3)
                 .resizeKeyboard(true)
                 .oneTimeKeyboard(false)
                 .build();
@@ -44,8 +46,19 @@ public final class TelegramApiService {
         doExecute(telegramClient::execute, sendMessage);
     }
 
+
+    public static List<KeyboardRow> getKeyboardRows1(){
+        KeyboardButton keyboardButton = new KeyboardButton("План обучения");
+        var keyboardButtons = new KeyboardRow();
+        keyboardButtons.add(keyboardButton);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        keyboardRows.add(keyboardButtons);
+        return keyboardRows;
+    }
+
     @NotNull
-    private static List<KeyboardRow> getKeyboardRows1() {
+    private static List<KeyboardRow> getKeyboardRows2() {
         var currentClass = new KeyboardButton("Текущая тема");
         var getHoweWork = new KeyboardButton("Получить домашнюю работу");
         var keyboardButtons = new KeyboardRow();
@@ -59,7 +72,7 @@ public final class TelegramApiService {
     }
 
     @NotNull
-    private static List<KeyboardRow> getKeyboardRows2() {
+    private static List<KeyboardRow> getKeyboardRows3() {
         var sendHoweWork = new KeyboardButton("Отправить домашнюю работу на проверку");
         var toNextLeve = new KeyboardButton("Перейти на следующий уровень");
         var keyboardButtons = new KeyboardRow();

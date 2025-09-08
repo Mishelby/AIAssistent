@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum ProgrammingLevel {
-    BEGINNER("first level"),
-    MIDDLE("middle level"),
-    SENIOR("senior level");
+    BEGINNER("BEGINNER"),
+    MIDDLE("MIDDLE"),
+    SENIOR("SENIOR");
 
     String description;
 

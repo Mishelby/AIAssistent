@@ -7,6 +7,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.development.api.model.UserEntity;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface UserEntityRepository extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
     @Query("""
@@ -15,4 +18,11 @@ public interface UserEntityRepository extends JpaRepository<UserEntity, Long>, J
             WHERE u.userName = :userName
             """)
     boolean existsByUsername(@Param("userName") String userName);
+
+    @Query("""
+            SELECT u
+            FROM UserEntity u
+            WHERE u.userName = :userName
+            """)
+    Optional<UserEntity> findByUserName(@Param("userName") String userName);
 }

@@ -6,5 +6,7 @@ import org.springframework.stereotype.Repository;
 import ru.development.api.model.GradeEntity;
 
 @Repository
-public interface GradeEntityRepository extends JpaRepository<GradeEntity, Long>, JpaSpecificationExecutor<GradeEntity> {
+public interface GradeEntityRepository extends
+        JpaRepository<GradeEntity, Long>,
+        JpaSpecificationExecutor<GradeEntity> {
 }

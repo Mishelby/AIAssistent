@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum ProgrammingLanguage {
-    JAVA("java"),
-    PYTHON("python"),
-    JAVASCRIPT("javascript");
+    JAVA("Java"),
+    PYTHON("Python"),
+    JAVASCRIPT("Javascript");
 
     String description;
 
